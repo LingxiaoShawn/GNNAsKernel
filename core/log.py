@@ -13,7 +13,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
     # generate config_string
     os.makedirs(os.path.join(OUT_PATH, cfg.version), exist_ok=True)
     config_string = f'GNN[{cfg.model.gnn_type}] L[{cfg.model.num_layers}] Mini[{cfg.model.mini_layers}] Emb[{cfg.model.embs}-{cfg.model.embs_combine_mode}] '\
-                    f'H[{cfg.model.hidden_size}] HopsEmb[{cfg.model.hops_dim}] Pool[{cfg.model.pool}] VN[{cfg.model.virtual_node}] '\
+                    f'H[{cfg.model.hidden_size}] HopsEmb[{cfg.model.hops_dim}] Pool[{cfg.model.pool}] VN[{cfg.model.virtual_node}] WithOri[{cfg.model.use_normal_gnn}] '\
                     f'Hops[{cfg.subgraph.hops}] WalkL[{cfg.subgraph.walk_length}] p[{cfg.subgraph.walk_p}] q[{cfg.subgraph.walk_q}] '\
                     f'Smp[{cfg.sampling.mode}] MR[{cfg.sampling.redundancy}] '\
                     f'Reg[{cfg.train.dropout}-{cfg.train.wd}] Seed[{cfg.seed}] GPU[{cfg.device}]'
@@ -39,6 +39,8 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
     sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
 
     # log configuration 
+    print("-"*50)
+    print(cfg)
     print("-"*50)
     print('Time:', datetime.datetime.now().strftime("%Y/%m/%d - %H:%M"))
     print(config_string)

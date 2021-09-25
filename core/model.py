@@ -130,14 +130,14 @@ class SubgraphGNNKernel(nn.Module):
             # get subgraph level embeddings
             if len(self.embs) == 1:
                 # TODO: test whether we should directly output or pass to a transform layer.
-                if self.embs == 0:
+                if self.embs[0] == 0:
                     centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
                     x = centroid_x
-                if self.embs == 1:
+                if self.embs[0] == 1:
                     subgraph_x = combined_subgraphs_x * self.gate_mapper_subgraph(hop_emb)
                     subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
                     x = subgraph_x
-                if self.embs == 2:
+                if self.embs[0] == 2:
                     context_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
                     context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
                     x = context_x
@@ -154,8 +154,9 @@ class SubgraphGNNKernel(nn.Module):
                 subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
                 context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
                 x = [centroid_x, subgraph_x, context_x]
+                x = [x[i] for i in self.embs]
                 if self.embs_combine_mode == 'add':
-                    x = sum([x[i] for i in self.embs])
+                    x = sum(x)
                 else:
                     x = torch.cat(x, dim=-1)
         

@@ -94,5 +94,4 @@ if __name__ == '__main__':
     # get config 
     cfg.merge_from_file('train/configs/zinc.yaml')
     cfg = update_cfg(cfg)
-    print(cfg)
     run(cfg, create_dataset, create_model, train, test)
