@@ -65,7 +65,10 @@ class SubgraphsTransform(object):
                           shortest_path_mode_stride=self.shortest_path_mode_stride, random_mode_sampling_rate=self.random_mode_sampling_rate)
 
             data.subsampling_scale = subgraphs_nodes_mask.sum(0) / node_selected_times
+            data.selected_supernodes = torch.tensor(selected_subgraphs)
+
             subgraphs_nodes, subgraphs_edges, hop_indicator  = select_subgraphs(subgraphs_nodes, subgraphs_edges, hop_indicator, selected_subgraphs)
+            
             
         combined_subgraphs = combine_subgraphs(data.edge_index, subgraphs_nodes, subgraphs_edges, num_selected=data.num_nodes, num_nodes=data.num_nodes)
 

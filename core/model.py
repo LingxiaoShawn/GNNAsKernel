@@ -119,6 +119,7 @@ class SubgraphGNNKernel(nn.Module):
                                           for gnn in self.gnns], dim=-1) # -1 dim = nout
 
         if self.subsampling:
+            print(data.selected_supernodes)
             # can only use context_x when use subsampling without pooling. 
             if self.use_hops: # test this
                 combined_subgraphs_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
