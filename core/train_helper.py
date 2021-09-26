@@ -21,8 +21,8 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
 
     # 2. create loader
     train_loader = DataLoader(train_dataset, cfg.train.batch_size, shuffle=True, num_workers=cfg.num_workers)
-    val_loader = DataLoader(val_dataset,  cfg.train.batch_size, shuffle=False, num_workers=cfg.num_workers)
-    test_loader = DataLoader(test_dataset, cfg.train.batch_size, shuffle=False, num_workers=cfg.num_workers)
+    val_loader = DataLoader(val_dataset,  cfg.train.batch_size//cfg.sampling.batch_factor, shuffle=False, num_workers=cfg.num_workers)
+    test_loader = DataLoader(test_dataset, cfg.train.batch_size//cfg.sampling.batch_factor, shuffle=False, num_workers=cfg.num_workers)
     
     test_perfs = []
     vali_perfs = []
@@ -61,7 +61,7 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
             writer.add_scalar(f'Run{run}/val-perf', val_perf, epoch)
             writer.add_scalar(f'Run{run}/test-best-perf', test_perf, epoch)
             writer.add_scalar(f'Run{run}/seconds', time_per_epoch, epoch)   
-            writer.add_scalar(f'Run{run}/memory', memory_reserved, epoch)   
+            writer.add_scalar(f'Run{run}/memory', memory_allocated, epoch)   
 
             torch.cuda.empty_cache() # empty test part memory cost
 

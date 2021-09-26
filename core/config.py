@@ -37,9 +37,9 @@ def set_cfg(cfg):
     # learning rate decay factor
     cfg.train.lr_decay = 0.5
     # L2 regularization, weight decay
-    cfg.train.wd = 0 
+    cfg.train.wd = 0.
     # Dropout rate
-    cfg.train.dropout = 0
+    cfg.train.dropout = 0.
     
     # ------------------------------------------------------------------------ #
     # Model options
@@ -64,9 +64,12 @@ def set_cfg(cfg):
     # What embedding to include
     cfg.model.embs = (0, 1, 2) # 0-Centroid, 1-Subgraph,  2-Context 
     # How to combine embs together when have more than 1 embs, choose from ['concat', 'add']
-    cfg.model.embs_combine_mode = 'concat'
+    cfg.model.embs_combine_mode = 'add'
+    # Number of MLP layers in generating subgraph embeddings
+    cfg.model.mlp_layers = 1
     # Whether combine with normal gnn, only used for random walk based subgraph which doesn't cover whole 1st hop
     cfg.model.use_normal_gnn = False
+
 
     # ------------------------------------------------------------------------ #
     # Subgraph patterns options
@@ -78,9 +81,9 @@ def set_cfg(cfg):
     # Random walk based subgraph walk length, when 0 use egonet
     cfg.subgraph.walk_length = 0
     # We use node2vec based random walk, p is return parameter. Small p => local walk
-    cfg.subgraph.walk_p = 1
+    cfg.subgraph.walk_p = 1.0
     # q is in-out parameter. Large q => local walk
-    cfg.subgraph.walk_q = 1
+    cfg.subgraph.walk_q = 1.0
     # Number of times of repeating the random walk to reduce randomness
     cfg.subgraph.walk_repeat = 5
 
@@ -95,10 +98,12 @@ def set_cfg(cfg):
     cfg.sampling.mode = None # None means don't use sampling 
     # The minimum times each node is covered by all sampled subgraphs
     cfg.sampling.redundancy = 0
-    # options for shortest_path_distance based farthest sampling
+    # Options for shortest_path_distance based farthest sampling
     cfg.sampling.stride = 2 
-    # options for random sampling
+    # Options for random sampling
     cfg.sampling.random_rate = 0.5
+    # Reduce evaluation batch size by a factor to avoid use more meory, as test is always in full-mode
+    cfg.sampling.batch_factor = 1
 
     return cfg
     

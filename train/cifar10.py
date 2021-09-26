@@ -1,11 +1,20 @@
-
 import torch
 from core.config import cfg, update_cfg
 from core.train_helper import run 
 from core.model import GNNAsKernel
 from core.transform import SubgraphsTransform
 
-from torch_geometric.datasets import ZINC
+from torch_geometric.transforms import Compose
+from torch_geometric.datasets import GNNBenchmarkDataset
+from torch_geometric.utils import to_undirected
+
+class SuperpixelTransform(object):
+    # combine position and intensity feature, ignore edge value
+    def __call__(self, data):
+        data.x = torch.cat([data.x, data.pos], dim=-1)
+        data.edge_attr = None # remove edge_attr
+        data.edge_index = to_undirected(data.edge_index) 
+        return data
 
 def create_dataset(cfg): 
     # No need to do offline transformation
@@ -27,10 +36,13 @@ def create_dataset(cfg):
                                         sampling_mode=None, 
                                         random_init=False)
 
-    root = 'data/ZINC'
-    train_dataset = ZINC(root, subset=True, split='train', transform=transform)
-    val_dataset = ZINC(root, subset=True, split='val', transform=transform_eval) 
-    test_dataset = ZINC(root, subset=True, split='test', transform=transform_eval)   
+    transform =  Compose([SuperpixelTransform(), transform])
+    transform_eval =  Compose([SuperpixelTransform(), transform_eval])
+
+    root = 'data'
+    train_dataset = GNNBenchmarkDataset(root, cfg.dataset, split='train', transform=transform)
+    val_dataset = GNNBenchmarkDataset(root, cfg.dataset, split='val', transform=transform_eval)
+    test_dataset = GNNBenchmarkDataset(root, cfg.dataset, split='test', transform=transform_eval)
 
     # When without randomness, transform the data to save a bit time
     torch.set_num_threads(cfg.num_workers)
@@ -42,9 +54,9 @@ def create_dataset(cfg):
     return train_dataset, val_dataset, test_dataset
 
 def create_model(cfg):
-    model = GNNAsKernel(None, None, 
+    model = GNNAsKernel(3 if cfg.dataset == 'MNIST' else 5, None, 
                         nhid=cfg.model.hidden_size, 
-                        nout=1, 
+                        nout=10, 
                         nlayer_outer=cfg.model.num_layers,
                         nlayer_inner=cfg.model.mini_layers,
                         gnn_types=[cfg.model.gnn_type], 
@@ -62,37 +74,32 @@ def create_model(cfg):
 
 def train(train_loader, model, optimizer, device):
     total_loss = 0
-    N = 0 
+    N = 0
+    criterion = torch.nn.CrossEntropyLoss()
     for data in train_loader:
-        if isinstance(data, list):
-            data, y, num_graphs = [d.to(device) for d in data], data[0].y, data[0].num_graphs 
-        else:
-            data, y, num_graphs = data.to(device), data.y, data.num_graphs
+        data = data.to(device)
         optimizer.zero_grad()
-        loss = (model(data).squeeze() - y).abs().mean()
+        out = model(data)
+        loss = criterion(out, data.y)
         loss.backward()
-        total_loss += loss.item() * num_graphs
+        total_loss += loss.item() * data.num_graphs
+        N += data.num_graphs
         optimizer.step()
-        N += num_graphs
     return total_loss / N
 
 @torch.no_grad()
 def test(loader, model, evaluator, device):
-    total_error = 0
-    N = 0
+    y_preds, y_trues = [], []
     for data in loader:
-        if isinstance(data, list):
-            data, y, num_graphs = [d.to(device) for d in data], data[0].y, data[0].num_graphs 
-        else:
-            data, y, num_graphs = data.to(device), data.y, data.num_graphs
-        total_error += (model(data).squeeze() - y).abs().sum().item()
-        N += num_graphs
-    test_perf = - total_error / N
-    return test_perf
-
+        data = data.to(device)
+        y_preds.append(torch.argmax(model(data), dim=-1))
+        y_trues.append(data.y)
+    y_preds = torch.cat(y_preds, -1)
+    y_trues = torch.cat(y_trues, -1)
+    return (y_preds == y_trues).float().mean()
 
 if __name__ == '__main__':
     # get config 
-    cfg.merge_from_file('train/configs/zinc.yaml')
+    cfg.merge_from_file('train/configs/cifar10.yaml')
     cfg = update_cfg(cfg)
     run(cfg, create_dataset, create_model, train, test)

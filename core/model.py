@@ -17,7 +17,7 @@ class GNN(nn.Module):
         # self.input_encoder = MLP(nin, nin, nlayer=2, with_final_activation=True) #if nin!=nout else nn.Identity()
         self.convs = nn.ModuleList([getattr(gnn_wrapper, gnn_type)(nin, nin, bias=not bn) for _ in range(nlayer)]) # set bias=False for BN
         self.norms = nn.ModuleList([nn.BatchNorm1d(nin) if bn else Identity() for _ in range(nlayer)])
-        self.output_encoder = MLP(nin, nout, nlayer=1, with_final_activation=False, bias=bias) if nin!=nout else Identity() 
+        self.output_encoder = MLP(nin, nout, nlayer=2, with_final_activation=False, bias=bias) if nin!=nout else Identity() 
         # !!!!!! attention! change output encoder layer from 2 to 1
         self.dropout = dropout
         self.res = res
@@ -54,13 +54,13 @@ class SubgraphGNNKernel(nn.Module):
                        pooling='mean',
                        embs=(0,1,2),
                        embs_combine_mode='add',
+                       mlp_layers=1,
                        subsampling=False, 
                        online=True):
         super().__init__()
         assert max(embs) <= 2 and min(embs) >= 0
         assert embs_combine_mode in ['add', 'concat']
 
-        l = 1
         use_hops = hop_dim > 0
         nhid = nout // len(gnn_types)
         self.hop_embedder = nn.Embedding(20, hop_dim)
@@ -72,12 +72,12 @@ class SubgraphGNNKernel(nn.Module):
             else:
                 gnn = GNN(nin+hop_dim if use_hops else nin, nhid, nlayer, gnn_type, dropout=dropout, res=res)
             self.gnns.append(gnn)
-        self.centroid_transform = MLP(nout, nout, nlayer=l, with_final_activation=True)
-        self.subgraph_transform = MLP(nout, nout, nlayer=l, with_final_activation=True)
-        self.context_transform =  MLP(nout, nout, nlayer=l, with_final_activation=True)
+        self.centroid_transform = MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
+        self.subgraph_transform = MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
+        self.context_transform =  MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
 
         # subsampling = True
-        self.out_encoder = MLP(nout if subsampling or embs_combine_mode=='add' else nout*len(embs), nout, nlayer=l, 
+        self.out_encoder = MLP(nout if subsampling or embs_combine_mode=='add' else nout*len(embs), nout, nlayer=mlp_layers, 
                                with_final_activation=False, bias=bias, with_norm=True)
 
         self.use_hops = use_hops
@@ -177,6 +177,7 @@ class GNNAsKernel(nn.Module):
                         pooling='mean',
                         embs=(0,1,2),
                         embs_combine_mode='add',
+                        mlp_layers=1,
                         subsampling=False, 
                         online=True):
         super().__init__()
@@ -195,6 +196,7 @@ class GNNAsKernel(nn.Module):
                                                                 pooling=pooling,
                                                                 embs=embs,
                                                                 embs_combine_mode=embs_combine_mode,
+                                                                mlp_layers=mlp_layers,
                                                                 subsampling=subsampling, 
                                                                 online=online) 
                                               for _ in range(nlayer_outer)])
