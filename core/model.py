@@ -121,97 +121,86 @@ class SubgraphGNNKernel(nn.Module):
         combined_subgraphs_x = torch.cat([gnn(combined_subgraphs_x, combined_subgraphs_edge_index, combined_subgraphs_edge_attr, combined_subgraphs_batch)
                                           for gnn in self.gnns], dim=-1) # -1 dim = nout
 
-        if self.subsampling:
-            if self.training:
-                centroid_x_selected = combined_subgraphs_x[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]
-                subgraph_x_selected = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                context_x_selected = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                if self.use_hops:
-                    centroid_x_selected = centroid_x_selected * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]) 
-                    subgraph_x_selected = subgraph_x_selected * self.gate_mapper_subgraph(hop_emb)
-                    context_x_selected = context_x_selected * self.gate_mapper_context(hop_emb)
-                subgraph_x_selected = scatter(subgraph_x_selected, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-                context_x_selected = scatter(context_x_selected, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+        if self.subsampling and self.training:
+            centroid_x_selected = combined_subgraphs_x[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]
+            subgraph_x_selected = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training)) if len(self.embs) > 1 else combined_subgraphs_x
+            context_x_selected = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training)) if len(self.embs) > 1 else combined_subgraphs_x
+            if self.use_hops:
+                centroid_x_selected = centroid_x_selected * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]) 
+                subgraph_x_selected = subgraph_x_selected * self.gate_mapper_subgraph(hop_emb)
+                context_x_selected = context_x_selected * self.gate_mapper_context(hop_emb)
+            subgraph_x_selected = scatter(subgraph_x_selected, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+            context_x_selected = scatter(context_x_selected, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
 
-                # propagate features from selected nodes to non-selected nodes, used as an estimator
-                centroid_x = data.x.new_zeros((len(data.x), centroid_x_selected.size(-1)))
-                centroid_x[data.selected_supernodes] = centroid_x_selected
-                subgraph_x = data.x.new_zeros((len(data.x), subgraph_x_selected.size(-1)))
-                subgraph_x[data.selected_supernodes] = subgraph_x_selected  
-                for i in range(1, data.edges_between_two_hops.max()+1):
-                    # print((new.sum(-1)==0).sum(), (data.hops_to_selected==i).sum() )
-                    bipartite = data.edge_index[:, data.edges_between_two_hops==i]
-                    scatter(centroid_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=centroid_x)
-                    scatter(subgraph_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=subgraph_x)
-                
-                # scale up the context embedding when using add pooling
-                context_x = context_x_selected * data.subsampling_scale.unsqueeze(-1) if self.pooling == 'add' else context_x_selected
-            else:
-                centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
-                subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                if self.use_hops:
-                    centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
-                    subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
-                    context_x = context_x * self.gate_mapper_context(hop_emb)
-                subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-                context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
-
-            x = [centroid_x, subgraph_x, context_x]
-            x = [x[i] for i in self.embs]
-            if self.embs_combine_mode == 'add':
-                x = sum(x)
-            else:
-                x = torch.cat(x, dim=-1)
-
-            # ######################################################## original ##################################################
-            # # can only use context_x when use subsampling without pooling. 
-            # if self.use_hops: # test this
-            #     combined_subgraphs_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
-            # x = scatter(combined_subgraphs_x , data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
-
-            # if self.pooling == 'add' and self.training and self.online: # only scale it up during training part
-            #     x = x * data.subsampling_scale.unsqueeze(-1)
-
+            # propagate features from selected nodes to non-selected nodes, used as an estimator
+            centroid_x = data.x.new_zeros((len(data.x), centroid_x_selected.size(-1)))
+            centroid_x[data.selected_supernodes] = centroid_x_selected
+            subgraph_x = data.x.new_zeros((len(data.x), subgraph_x_selected.size(-1)))
+            subgraph_x[data.selected_supernodes] = subgraph_x_selected  
+            for i in range(1, data.edges_between_two_hops.max()+1):
+                # print((new.sum(-1)==0).sum(), (data.hops_to_selected==i).sum() )
+                bipartite = data.edge_index[:, data.edges_between_two_hops==i]
+                scatter(centroid_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=centroid_x)
+                scatter(subgraph_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=subgraph_x)
             
+            # scale up the context embedding when using add pooling
+            context_x = context_x_selected * data.subsampling_scale.unsqueeze(-1) if self.pooling == 'add' else context_x_selected
         else:
-            # get subgraph level embeddings
-            if len(self.embs) == 1:
-                # TODO: test whether we should directly output or pass to a transform layer.
-                if self.embs[0] == 0:
-                    centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
-                    x = centroid_x
-                if self.embs[0] == 1:
-                    subgraph_x = combined_subgraphs_x * self.gate_mapper_subgraph(hop_emb)
-                    subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-                    x = subgraph_x
-                if self.embs[0] == 2:
-                    context_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
-                    context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
-                    x = context_x
-            else:
-                # centroid_x = self.centroid_transform(F.dropout(combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)], self.dropout, training=self.training))
-                # TODO: how many MLP layers we should use??
-                centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
-                subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-                if self.use_hops:
-                    centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
-                    subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
-                    context_x = context_x * self.gate_mapper_context(hop_emb)
-                subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-                context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+            centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
+            subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training)) if len(self.embs) > 1 else combined_subgraphs_x
+            context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training)) if len(self.embs) > 1 else combined_subgraphs_x
+            if self.use_hops:
+                centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
+                subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
+                context_x = context_x * self.gate_mapper_context(hop_emb)
+            subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+            context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+
+        x = [centroid_x, subgraph_x, context_x]
+        x = [x[i] for i in self.embs]
+        if self.embs_combine_mode == 'add':
+            x = sum(x)
+            # x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
+        else:
+            x = torch.cat(x, dim=-1)
+            # last part is only essential for embs_combine_mode = 'concat', can be ignored when overfitting
+            x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
+            
+        # else:
+        #     # get subgraph level embeddings
+        #     if len(self.embs) == 1:
+        #         # TODO: test whether we should directly output or pass to a transform layer.
+        #         if self.embs[0] == 0:
+        #             centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
+        #             x = centroid_x
+        #         if self.embs[0] == 1:
+        #             subgraph_x = combined_subgraphs_x * self.gate_mapper_subgraph(hop_emb)
+        #             subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+        #             x = subgraph_x
+        #         if self.embs[0] == 2:
+        #             context_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
+        #             context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+        #             x = context_x
+        #     else:
+        #         # centroid_x = self.centroid_transform(F.dropout(combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)], self.dropout, training=self.training))
+        #         # TODO: how many MLP layers we should use??
+        #         centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
+        #         subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+        #         context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+        #         if self.use_hops:
+        #             centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
+        #             subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
+        #             context_x = context_x * self.gate_mapper_context(hop_emb)
+        #         subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+        #         context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
 
 
-                x = [centroid_x, subgraph_x, context_x]
-                x = [x[i] for i in self.embs]
-                if self.embs_combine_mode == 'add':
-                    x = sum(x)
-                else:
-                    x = torch.cat(x, dim=-1)
-        
-        # last part is only essential for embs_combine_mode = 'concat', can be ignored when overfitting
-        x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
+        #         x = [centroid_x, subgraph_x, context_x]
+        #         x = [x[i] for i in self.embs]
+        #         if self.embs_combine_mode == 'add':
+        #             x = sum(x)
+        #         else:
+        #             x = torch.cat(x, dim=-1)
         return x
 
 
