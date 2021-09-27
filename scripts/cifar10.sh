@@ -28,3 +28,6 @@ python -m train.cifar10 --config train/configs/cifar10_sampling.yaml sampling.re
 python -m train.cifar10 --config train/configs/cifar10_sampling.yaml model.gnn_type SimplifiedPNAConv sampling.redundancy 3 sampling.random_rate 0.2 device 4 &
 python -m train.cifar10  model.mlp_layers 2 device 5 &
 
+python -m train.cifar10 --config train/configs/cifar10_sampling.yaml model.gnn_type SimplifiedPNAConv sampling.redundancy 3 sampling.random_rate 0.2  model.mlp_layers 2 device 5 &
+python -m train.cifar10 --config train/configs/cifar10_sampling.yaml model.mini_layers 2 sampling.redundancy 7 sampling.random_rate 0.4 device 4 &
+python -m train.cifar10 --config train/configs/cifar10_sampling.yaml subgraph.hops 3 sampling.redundancy 3 sampling.random_rate 0.1 device 3 &
