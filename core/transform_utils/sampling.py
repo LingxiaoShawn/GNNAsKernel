@@ -9,7 +9,7 @@ def random_sampling(subgraphs_nodes, rate=0.5, minimum_redundancy=0, num_nodes=N
         selected = np.random.choice(num_nodes, int(num_nodes*rate), replace=False)
         node_selected_times = torch.bincount(subgraphs_nodes[1][check_values_in_set(subgraphs_nodes[0], selected)], minlength=num_nodes)
         if node_selected_times.min() >= minimum_redundancy:
-            rate += 0.1 # enlarge the sampling rate 
+            # rate += 0.1 # enlarge the sampling rate 
             break
     return selected, node_selected_times
 
