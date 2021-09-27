@@ -1,0 +1,14 @@
+dataset: ogbg-molhiv
+model:
+  hidden_size: 64
+  num_layers: 4
+  mini_layers: 1
+  pool: mean
+  embs: (0, 2)
+  embs_combine_mode: 'add'
+subgraph:
+  hops: 3
+  online: True
+train:
+  lr_patience: 50
+  dropout: 0.
