@@ -17,7 +17,7 @@ class GNN(nn.Module):
         # self.input_encoder = MLP(nin, nin, nlayer=2, with_final_activation=True) #if nin!=nout else nn.Identity()
         self.convs = nn.ModuleList([getattr(gnn_wrapper, gnn_type)(nin, nin, bias=not bn) for _ in range(nlayer)]) # set bias=False for BN
         self.norms = nn.ModuleList([nn.BatchNorm1d(nin) if bn else Identity() for _ in range(nlayer)])
-        self.output_encoder = MLP(nin, nout, nlayer=2, with_final_activation=False, bias=bias) if nin!=nout else Identity() 
+        self.output_encoder = MLP(nin, nout, nlayer=1, with_final_activation=False, bias=bias) if nin!=nout else Identity() 
         # !!!!!! attention! change output encoder layer from 2 to 1
         self.dropout = dropout
         self.res = res
@@ -80,6 +80,9 @@ class SubgraphGNNKernel(nn.Module):
         self.out_encoder = MLP(nout if subsampling or embs_combine_mode=='add' else nout*len(embs), nout, nlayer=mlp_layers, 
                                with_final_activation=False, bias=bias, with_norm=True)
 
+        self.out_encoder = MLP(nout if embs_combine_mode=='add' else nout*len(embs), nout, nlayer=mlp_layers, 
+                               with_final_activation=False, bias=bias, with_norm=True)
+
         self.use_hops = use_hops
         self.gate_mapper_subgraph = nn.Sequential(nn.Linear(hop_dim, nout), nn.Sigmoid())
         self.gate_mapper_context = nn.Sequential(nn.Linear(hop_dim, nout), nn.Sigmoid())
@@ -119,14 +122,58 @@ class SubgraphGNNKernel(nn.Module):
                                           for gnn in self.gnns], dim=-1) # -1 dim = nout
 
         if self.subsampling:
-            print(data.selected_supernodes)
-            # can only use context_x when use subsampling without pooling. 
-            if self.use_hops: # test this
-                combined_subgraphs_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
-            x = scatter(combined_subgraphs_x , data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+            if self.training:
+                centroid_x_selected = combined_subgraphs_x[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]
+                subgraph_x_selected = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+                context_x_selected = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+                if self.use_hops:
+                    centroid_x_selected = centroid_x_selected * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]) 
+                    subgraph_x_selected = subgraph_x_selected * self.gate_mapper_subgraph(hop_emb)
+                    context_x_selected = context_x_selected * self.gate_mapper_context(hop_emb)
+                subgraph_x_selected = scatter(subgraph_x_selected, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+                context_x_selected = scatter(context_x_selected, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
 
-            if self.pooling == 'add' and self.training and self.online: # only scale it up during training part
-                x = x * data.subsampling_scale.unsqueeze(-1)
+                # propagate features from selected nodes to non-selected nodes, used as an estimator
+                centroid_x = data.x.new_zeros((len(data.x), centroid_x_selected.size(-1)))
+                centroid_x[data.selected_supernodes] = centroid_x_selected
+                subgraph_x = data.x.new_zeros((len(data.x), subgraph_x_selected.size(-1)))
+                subgraph_x[data.selected_supernodes] = subgraph_x_selected  
+                for i in range(1, data.edges_between_two_hops.max()+1):
+                    # print((new.sum(-1)==0).sum(), (data.hops_to_selected==i).sum() )
+                    bipartite = data.edge_index[:, data.edges_between_two_hops==i]
+                    scatter(centroid_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=centroid_x)
+                    scatter(subgraph_x[bipartite[0]], bipartite[1], dim=0, reduce='mean', out=subgraph_x)
+                
+                # scale up the context embedding when using add pooling
+                context_x = context_x_selected * data.subsampling_scale.unsqueeze(-1) if self.pooling == 'add' else context_x_selected
+            else:
+                centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
+                subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+                context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
+                if self.use_hops:
+                    centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
+                    subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
+                    context_x = context_x * self.gate_mapper_context(hop_emb)
+                subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+                context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+
+            x = [centroid_x, subgraph_x, context_x]
+            x = [x[i] for i in self.embs]
+            if self.embs_combine_mode == 'add':
+                x = sum(x)
+            else:
+                x = torch.cat(x, dim=-1)
+
+            # ######################################################## original ##################################################
+            # # can only use context_x when use subsampling without pooling. 
+            # if self.use_hops: # test this
+            #     combined_subgraphs_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
+            # x = scatter(combined_subgraphs_x , data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+
+            # if self.pooling == 'add' and self.training and self.online: # only scale it up during training part
+            #     x = x * data.subsampling_scale.unsqueeze(-1)
+
+            
         else:
             # get subgraph level embeddings
             if len(self.embs) == 1:
@@ -154,6 +201,8 @@ class SubgraphGNNKernel(nn.Module):
                     context_x = context_x * self.gate_mapper_context(hop_emb)
                 subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
                 context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
+
+
                 x = [centroid_x, subgraph_x, context_x]
                 x = [x[i] for i in self.embs]
                 if self.embs_combine_mode == 'add':

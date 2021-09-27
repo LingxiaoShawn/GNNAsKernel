@@ -64,8 +64,10 @@ class SubgraphsTransform(object):
                           sampling_mode=self.sampling_mode, random_init=self.random_init, minimum_redundancy=self.minimum_redundancy,
                           shortest_path_mode_stride=self.shortest_path_mode_stride, random_mode_sampling_rate=self.random_mode_sampling_rate)
 
+            # for training mode in sampling mode
             data.subsampling_scale = subgraphs_nodes_mask.sum(0) / node_selected_times
-            data.selected_supernodes = torch.tensor(selected_subgraphs)
+            data.selected_supernodes = torch.tensor(np.sort(selected_subgraphs))
+            data.hops_to_selected, data.edges_between_two_hops = hops_to_selected_nodes(data.edge_index, selected_subgraphs, data.num_nodes)
 
             subgraphs_nodes, subgraphs_edges, hop_indicator  = select_subgraphs(subgraphs_nodes, subgraphs_edges, hop_indicator, selected_subgraphs)
             
@@ -148,3 +150,32 @@ def combine_subgraphs(edge_index, subgraphs_nodes, subgraphs_edges, num_selected
     combined_subgraphs += inc[subgraphs_edges[0]]
     combined_subgraphs = node_label_mapper[combined_subgraphs]
     return combined_subgraphs
+
+
+def hops_to_selected_nodes(edge_index, selected_nodes, num_nodes=None):
+    row, col = edge_index
+    if num_nodes is None:
+        num_nodes = 1 + edge_index.max()
+    hop_indicator = row.new_full((num_nodes,), -1)
+    bipartitie_indicator = row.new_full(row.shape, -1)
+    hop_indicator[selected_nodes] = 0
+    node_mask = row.new_empty(num_nodes, dtype=torch.bool)
+    selected_nodes = (hop_indicator == 0)
+    i = 1
+    while hop_indicator.min() < 0:
+        source_near_edges = selected_nodes[row]
+        node_mask.fill_(False)
+        node_mask[col[source_near_edges]] = True
+        selected_nodes = (hop_indicator==-1) & node_mask
+        bipartitie_between_source_target = source_near_edges & selected_nodes[col]
+        bipartitie_indicator[bipartitie_between_source_target] = i
+        hop_indicator[selected_nodes] = i 
+        i += 1
+        
+    return hop_indicator, bipartitie_indicator
+
+
+    
+
+
+
