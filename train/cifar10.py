@@ -45,7 +45,7 @@ def create_dataset(cfg):
     test_dataset = GNNBenchmarkDataset(root, cfg.dataset, split='test', transform=transform_eval)
 
     # When without randomness, transform the data to save a bit time
-    torch.set_num_threads(cfg.num_workers)
+    # torch.set_num_threads(cfg.num_workers)
     if (cfg.sampling.mode is None and cfg.subgraph.walk_length == 0) or (cfg.subgraph.online is False):
         train_dataset = [x for x in train_dataset]
     val_dataset = [x for x in val_dataset] 
