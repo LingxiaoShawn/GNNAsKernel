@@ -7,6 +7,7 @@ model:
   embs: (0, 1, 2)
   embs_combine_mode: 'concat'
   mlp_layers: 2
+  pool: add
 subgraph:
   hops: 2
   online: True

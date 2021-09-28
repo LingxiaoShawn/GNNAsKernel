@@ -33,6 +33,7 @@ def create_dataset(cfg):
                                         walk_length=cfg.subgraph.walk_length, 
                                         p=cfg.subgraph.walk_p, 
                                         q=cfg.subgraph.walk_q, 
+                                        repeat=cfg.subgraph.walk_repeat,
                                         sampling_mode=None, 
                                         random_init=False)
 

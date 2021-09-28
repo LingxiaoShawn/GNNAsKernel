@@ -1,0 +1,8 @@
+dataset: count_substructures
+model:
+  mini_layers: 1
+subgraph:
+  hops: 2
+Train:
+  epochs: 210
+  

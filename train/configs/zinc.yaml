@@ -4,10 +4,11 @@ model:
   mini_layers: 1
   embs: (0, 1, 2)
   embs_combine_mode: 'concat'
+  pool: add
 subgraph:
   hops: 3
   online: True
 train:
-  epochs: 300
+  epochs: 310
 
 

@@ -12,3 +12,4 @@ subgraph:
 train:
   lr_patience: 50
   dropout: 0.
+  epochs: 105

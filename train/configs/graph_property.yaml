@@ -1,0 +1,8 @@
+dataset: graph_property
+model:
+  mini_layers: 1
+subgraph:
+  hops: 2
+train:
+  batch_size: 64
+  epochs: 210
