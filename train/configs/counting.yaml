@@ -3,6 +3,6 @@ model:
   mini_layers: 1
 subgraph:
   hops: 2
-Train:
+train:
   epochs: 210
   
