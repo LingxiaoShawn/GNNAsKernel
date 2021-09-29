@@ -1,10 +1,10 @@
 dataset: ogbg-molhiv
 model:
-  hidden_size: 64
-  num_layers: 4
+  hidden_size: 128
+  num_layers: 6
   mini_layers: 1
   pool: mean
-  embs: (0, 2)
+  embs: (0,)
   embs_combine_mode: 'add'
 subgraph:
   hops: 3
