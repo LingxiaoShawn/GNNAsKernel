@@ -47,6 +47,7 @@ def check_values_in_set(x, set, approach=1):
     if approach == 0:
         mask = sum(x==i for i in set)
     else:
+        # print(x.shape, torch.tensor(set).shape, torch.tensor(set))
         mapper = torch.zeros(max(x.max()+1, max(set)+1), dtype=torch.bool)
         mapper[set] = True
         mask = mapper[x]
