@@ -44,11 +44,12 @@ def shortest_path_sampling(edge_index, subgraphs_nodes, stride=2, minimum_redund
     return selected, node_selected_times
 
 def check_values_in_set(x, set, approach=1):
+    assert min(x.shape) > 0
+    assert min(set.shape) > 0
     if approach == 0:
         mask = sum(x==i for i in set)
     else:
-        # print(x.shape, torch.tensor(set).shape, torch.tensor(set))
-        mapper = torch.zeros(max(x.max()+1, max(set)+1), dtype=torch.bool)
+        mapper = torch.zeros(max(x.max()+1, set.max()+1), dtype=torch.bool)
         mapper[set] = True
         mask = mapper[x]
     return mask

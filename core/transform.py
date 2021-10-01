@@ -58,6 +58,11 @@ class SubgraphsTransform(object):
                                                                                              self.walk_length, self.p, self.q, self.repeat)
         subgraphs_nodes, subgraphs_edges, hop_indicator = to_sparse(subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense)
 
+        # print(subgraphs_edges[0], )
+        if min(subgraphs_edges.shape) == 0:
+            print(data.edge_index)
+
+
         if self.subsampling:
             selected_subgraphs, node_selected_times = subsampling_subgraphs(data.edge_index, 
                           subgraphs_nodes if self.sampling_mode != 'min_set_cover' else subgraphs_nodes_mask, data.num_nodes,
@@ -69,7 +74,9 @@ class SubgraphsTransform(object):
             data.selected_supernodes = torch.tensor(np.sort(selected_subgraphs))
             data.hops_to_selected, data.edges_between_two_hops = hops_to_selected_nodes(data.edge_index, selected_subgraphs, data.num_nodes)
 
-            subgraphs_nodes, subgraphs_edges, hop_indicator  = select_subgraphs(subgraphs_nodes, subgraphs_edges, hop_indicator, selected_subgraphs)
+            if min(subgraphs_edges.shape) > 0: 
+                # when = 0 the graph is only single node with empty edges, no need to select
+                subgraphs_nodes, subgraphs_edges, hop_indicator  = select_subgraphs(subgraphs_nodes, subgraphs_edges, hop_indicator, selected_subgraphs)
             
             
         combined_subgraphs = combine_subgraphs(data.edge_index, subgraphs_nodes, subgraphs_edges, num_selected=data.num_nodes, num_nodes=data.num_nodes)
@@ -89,6 +96,7 @@ import numpy as np
 
 def select_subgraphs(subgraphs_nodes, subgraphs_edges, hop_indicator, selected_subgraphs):
     selected_subgraphs = np.sort(selected_subgraphs)
+
     selected_nodes_mask = check_values_in_set(subgraphs_nodes[0], selected_subgraphs)
     selected_edges_mask = check_values_in_set(subgraphs_edges[0], selected_subgraphs)
 
