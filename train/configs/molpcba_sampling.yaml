@@ -1,0 +1,5 @@
+sampling:
+  mode: shortest_path
+  redundancy: 3
+  stride: 5 
+  batch_factor: 4
