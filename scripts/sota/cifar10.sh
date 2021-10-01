@@ -12,6 +12,8 @@ python -m train.cifar10 model.mini_layers 0 model.gnn_type SimplifiedPNAConv dev
 # SimplifiedPNA-AK
 python -m train.cifar10 model.mini_layers 1 model.gnn_type SimplifiedPNAConv device 5 train.batch_size 40 & 
 
+python -m train.cifar10 --config train/configs/cifar10_sampling.yaml model.mini_layers 1 model.gnn_type SimplifiedPNAConv sampling.redundancy 3 sampling.random_rate 0.2 device 4 
+
 
 
 # # GAT
