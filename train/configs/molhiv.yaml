@@ -13,3 +13,4 @@ train:
   lr_patience: 50
   dropout: 0.3
   epochs: 60
+  runs: 5
