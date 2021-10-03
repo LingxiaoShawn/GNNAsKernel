@@ -7,5 +7,7 @@ model:
 subgraph:
   hops: 3
 train:
-  epochs: 210
+  lr_patience: 40
+  epochs: 250
+  runs: 2
   

@@ -8,4 +8,5 @@ subgraph:
   hops: 3
 train:
   batch_size: 128
-  epochs: 210
+  lr_patience: 40
+  epochs: 165
