@@ -27,8 +27,13 @@ for layer in "${layers[@]}"; do
 done
 
 
-# run GCN and PNA 
-python -m train.counting model.gnn_type GCNConv
-python -m train.counting model.gnn_type SimplifiedPNAConv
-python -m train.graph_property model.gnn_type GCNConv
-python -m train.graph_property model.gnn_type SimplifiedPNAConv
+# # run GCN and PNA 
+# python -m train.counting model.gnn_type GCNConv    
+# python -m train.counting model.gnn_type SimplifiedPNAConv
+# python -m train.graph_property model.gnn_type GCNConv
+# python -m train.graph_property model.gnn_type SimplifiedPNAConv
+
+# python -m train.counting model.gnn_type GCNConv                   model.mini_layers 0 
+# python -m train.counting model.gnn_type SimplifiedPNAConv         model.mini_layers 0 
+# python -m train.graph_property model.gnn_type GCNConv             model.mini_layers 0 
+# python -m train.graph_property model.gnn_type SimplifiedPNAConv   model.mini_layers 0 
