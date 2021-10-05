@@ -166,41 +166,6 @@ class SubgraphGNNKernel(nn.Module):
             # last part is only essential for embs_combine_mode = 'concat', can be ignored when overfitting
             x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
             
-        # else:
-        #     # get subgraph level embeddings
-        #     if len(self.embs) == 1:
-        #         # TODO: test whether we should directly output or pass to a transform layer.
-        #         if self.embs[0] == 0:
-        #             centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
-        #             x = centroid_x
-        #         if self.embs[0] == 1:
-        #             subgraph_x = combined_subgraphs_x * self.gate_mapper_subgraph(hop_emb)
-        #             subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-        #             x = subgraph_x
-        #         if self.embs[0] == 2:
-        #             context_x = combined_subgraphs_x * self.gate_mapper_context(hop_emb)
-        #             context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
-        #             x = context_x
-        #     else:
-        #         # centroid_x = self.centroid_transform(F.dropout(combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)], self.dropout, training=self.training))
-        #         # TODO: how many MLP layers we should use??
-        #         centroid_x = combined_subgraphs_x[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]
-        #         subgraph_x = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-        #         context_x = self.context_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training))
-        #         if self.use_hops:
-        #             centroid_x = centroid_x * self.gate_mapper_centroid(hop_emb[(data.subgraphs_nodes_mapper == combined_subgraphs_batch)]) 
-        #             subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
-        #             context_x = context_x * self.gate_mapper_context(hop_emb)
-        #         subgraph_x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
-        #         context_x = scatter(context_x, data.subgraphs_nodes_mapper, dim=0, reduce=self.pooling)
-
-
-        #         x = [centroid_x, subgraph_x, context_x]
-        #         x = [x[i] for i in self.embs]
-        #         if self.embs_combine_mode == 'add':
-        #             x = sum(x)
-        #         else:
-        #             x = torch.cat(x, dim=-1)
         return x
 
 
@@ -220,6 +185,12 @@ class GNNAsKernel(nn.Module):
                         subsampling=False, 
                         online=True):
         super().__init__()
+        # special case: PPGN
+        if gnn_types[0] == 'PPGN' and nlayer_inner == 0:
+            # normal PPGN
+            nlayer_ppgn = nlayer_outer
+            nlayer_outer = 1
+
         # nfeat_in is None: discrete input features
         self.input_encoder = DiscreteEncoder(nhid) if nfeat_node is None else MLP(nfeat_node, nhid, 1)
         # layers
@@ -248,13 +219,14 @@ class GNNAsKernel(nn.Module):
             self.traditional_gnns = nn.ModuleList([getattr(gnn_wrapper, gnn_types[0])(nhid, nhid, bias=not bn) for _ in range(nlayer_outer)])
         else:
             # currently not support PPGN! 
-            self.traditional_gnns = nn.ModuleList(Identity() for _ in range(nlayer_outer))
+            self.traditional_gnns = nn.ModuleList(PPGN(nhid, nhid, nlayer_ppgn) for _ in range(nlayer_outer))
         # virtual node
         if vn:
             self.v0 = nn.Parameter(torch.zeros(1, nhid), requires_grad=True)
             self.vn_aggregator = VNAgg(nhid)
 
         # record params
+        self.gnn_type = gnn_types[0]
         self.dropout = dropout
         self.num_inner_layers = nlayer_inner
         self.node_embedding = node_embedding
@@ -298,10 +270,16 @@ class GNNAsKernel(nn.Module):
             # with record_function(f"gnn conv {i}"):
             if self.num_inner_layers == 0: 
                 # standard message passing nn 
-                x = normal_gnn(data.x, data.edge_index, data.edge_attr)
+                if self.gnn_type == 'PPGN':
+                    x = normal_gnn(data.x, data.edge_index, data.edge_attr, data.batch)
+                else:
+                    x = normal_gnn(data.x, data.edge_index, data.edge_attr)
             else:
                 if self.use_normal_gnn:
-                    x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, data.edge_attr[:,:-self.hop_dim])
+                    if self.gnn_type == 'PPGN':
+                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, data.edge_attr[:,:-self.hop_dim], data.batch)
+                    else:
+                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, data.edge_attr[:,:-self.hop_dim])
                 else:
                     x = subgraph_layer(data)
 
