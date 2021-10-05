@@ -11,3 +11,4 @@ subgraph:
 train:
   lr: 0.004
   epochs: 210
+  runs: 1
