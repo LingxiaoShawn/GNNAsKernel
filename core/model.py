@@ -186,6 +186,7 @@ class GNNAsKernel(nn.Module):
                         online=True):
         super().__init__()
         # special case: PPGN
+        nlayer_ppgn = nlayer_inner
         if gnn_types[0] == 'PPGN' and nlayer_inner == 0:
             # normal PPGN
             nlayer_ppgn = nlayer_outer
