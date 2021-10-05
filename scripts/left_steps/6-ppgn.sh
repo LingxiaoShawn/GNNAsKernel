@@ -3,9 +3,9 @@ hops=(1 2)
 inner_layers=(1 2 3)
 outer_layers=(1 2 3)
 
-for hops in "${hops[@]}"; do
+for hop in "${hops[@]}"; do
 for outer in "${outer_layers[@]}"; do
-for inner_layers in "${inner_layers[@]}"; do
+for inner in "${inner_layers[@]}"; do
     python -m train.sr25 subgraph.hops $hop model.mini_layers $inner model.num_layers $outer  model.gnn_type PPGN
 done
 done
