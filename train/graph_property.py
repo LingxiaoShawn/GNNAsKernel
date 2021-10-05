@@ -8,6 +8,7 @@ from core.data import GraphPropertyDataset
 import numpy as np
 
 def create_dataset(cfg): 
+    torch.set_num_threads(cfg.num_workers)
     # No need to do offline transformation
     transform = SubgraphsTransform(cfg.subgraph.hops, 
                                    walk_length=cfg.subgraph.walk_length, 
