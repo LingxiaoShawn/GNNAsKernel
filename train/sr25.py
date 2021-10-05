@@ -78,6 +78,7 @@ def train(train_loader, model, optimizer, device):
 
 @torch.no_grad()
 def test(loader, model, evaluator, device):
+    model.train() # eliminate the effect of BN
     y_preds, y_trues = [], []
     for data in loader:
         data = data.to(device)

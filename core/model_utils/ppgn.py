@@ -23,6 +23,8 @@ class PPGN(nn.Module):
         # to dense first
         x, adj, mask_x = to_dense_batch(x, edge_index, edge_attr, batch) # B x N_max x N_max x F
 
+        ### TODO: for PPGN-AK we need to make N_max smaller, by make batch hasing more disconnected component
+
         # combine x and adj 
         idx_tmp = range(x.size(1))
         adj[:, idx_tmp, idx_tmp, :] = x

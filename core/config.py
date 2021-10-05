@@ -19,6 +19,8 @@ def set_cfg(cfg):
     cfg.downsample = False 
     # version 
     cfg.version = 'final'
+    # task, for simulation datasets
+    cfg.task = -1
 
     # ------------------------------------------------------------------------ #
     # Training options

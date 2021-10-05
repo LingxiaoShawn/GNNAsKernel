@@ -12,7 +12,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
         data_name += f'-{cfg.handtune}'
     # generate config_string
     os.makedirs(os.path.join(OUT_PATH, cfg.version), exist_ok=True)
-    config_string = f'GNN[{cfg.model.gnn_type}] L[{cfg.model.num_layers}] Mini[{cfg.model.mini_layers}] '\
+    config_string = f'T[{cfg.task}] GNN[{cfg.model.gnn_type}] L[{cfg.model.num_layers}] Mini[{cfg.model.mini_layers}] '\
                     f'Emb[{cfg.model.embs}-{cfg.model.embs_combine_mode}-{cfg.model.mlp_layers}] '\
                     f'H[{cfg.model.hidden_size}] HopsEmb[{cfg.model.hops_dim}] Pool[{cfg.model.pool}] VN[{cfg.model.virtual_node}] WithOri[{cfg.model.use_normal_gnn}] '\
                     f'Hops[{cfg.subgraph.hops}] WalkL[{cfg.subgraph.walk_length}] p[{cfg.subgraph.walk_p}] q[{cfg.subgraph.walk_q}] '\
@@ -37,7 +37,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
 
     # redirect stdout print, better for large scale experiments
     os.makedirs(os.path.join('logs', data_name), exist_ok=True)
-    sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
+    # sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
 
     # log configuration 
     print("-"*50)

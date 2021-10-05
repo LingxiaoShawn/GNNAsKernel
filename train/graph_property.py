@@ -44,7 +44,7 @@ def create_dataset(cfg):
 def create_model(cfg):
     model = GNNAsKernel(2, None, 
                         nhid=cfg.model.hidden_size, 
-                        nout=3, 
+                        nout=3 if cfg.task < 0 else 1, 
                         nlayer_outer=cfg.model.num_layers,
                         nlayer_inner=cfg.model.mini_layers,
                         gnn_types=[cfg.model.gnn_type], 
@@ -58,12 +58,13 @@ def create_model(cfg):
                         dropout=cfg.train.dropout, 
                         subsampling=True if cfg.sampling.mode is not None else False,
                         online=cfg.subgraph.online) 
+    model.task = cfg.task
     return model
 
 def train(train_loader, model, optimizer, device):
     total_loss = 0
     N = 0
-    ntask = -1
+    ntask = model.task
     for data in train_loader:
         data = data.to(device)
         optimizer.zero_grad()
@@ -83,7 +84,7 @@ def train(train_loader, model, optimizer, device):
 def test(loader, model, evaluator, device):
     total_error = 0
     N = 0 
-    ntask = -1
+    ntask = model.task
     for data in loader:
         data = data.to(device)
         if ntask >= 0:

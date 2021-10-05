@@ -43,6 +43,7 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
             scheduler.step()
             memory_allocated = torch.cuda.max_memory_allocated(cfg.device) // (1024 ** 2)
             memory_reserved = torch.cuda.max_memory_reserved(cfg.device) // (1024 ** 2)
+            # print(f"---{test(train_loader, model, evaluator=evaluator, device=cfg.device) }")
 
             model.eval()
             val_perf = test(val_loader, model, evaluator=evaluator, device=cfg.device)
