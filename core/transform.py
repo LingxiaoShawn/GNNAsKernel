@@ -5,7 +5,7 @@ from core.transform_utils.subgraph_extractors import *
 
 import re
 class SubgraphsData(Data):
-    def __inc__(self, key, value):
+    def __inc__(self, key, value, *args, **kwargs):
         num_nodes = self.num_nodes
         num_edges = self.edge_index.size(-1)
         if bool(re.search('(combined_subgraphs)', key)):
@@ -19,13 +19,13 @@ class SubgraphsData(Data):
             # batched_edge_attr[subgraphs_edges_mapper] shoud be batched_combined_subgraphs_edge_attr
             return num_edges
         else:
-            return super().__inc__(key, value)
+            return super().__inc__(key, value, *args, **kwargs)
 
-    def __cat_dim__(self, key, value):
+    def __cat_dim__(self, key, value, *args, **kwargs):
         if bool(re.search('(combined_subgraphs)', key)):
             return -1
         else:
-            return super().__cat_dim__(key, value)
+            return super().__cat_dim__(key, value, *args, **kwargs)
 
 class SubgraphsTransform(object):
     def __init__(self, hops=2, 

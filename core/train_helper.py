@@ -2,7 +2,7 @@
 import torch
 import time
 from core.log import config_logger
-from core.dataloader import DataLoader
+from torch_geometric.loader import DataLoader
 from torch.optim.lr_scheduler import StepLR
 
 def run(cfg, create_dataset, create_model, train, test, evaluator=None):
