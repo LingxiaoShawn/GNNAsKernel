@@ -9,6 +9,6 @@ subgraph:
   hops: 1
   online: True
 train:
-  lr: 0.004
-  epochs: 210
+  lr: 0.002
+  epochs: 305
   runs: 1
