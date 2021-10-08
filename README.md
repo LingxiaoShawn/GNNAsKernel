@@ -1,16 +1,18 @@
-## GNNAsKernel
+# GNNAsKernel
 Official code for **From Star to Subgraph: Uplifting Any GNN with Local Structure Awareness**
 
 On the way to release! 
 
-### Visualizations
+## Visualizations
+### GNN-AK
 ![GNN-AK](./figs/GNN-AK.png)
-
+### GNN-AK with SubgraphDrop 
 ![GNN-AK-S: GNN-AK with SubgraphDrop](./figs/GNN-AK-S.png)
 
-### Results 
+## Results 
+### GNN-AK boosts expressiveness
 ![GNN-AK boosts expressiveness](./figs/simulation.png)
-
+### GNN-AK boosts practical performance
 ![GNN-AK boosts practical performance](./figs/real-world.png)
 
 <!--
