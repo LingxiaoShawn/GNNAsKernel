@@ -1,5 +1,5 @@
 # GNNAsKernel
-Official code for **From Star to Subgraph: Uplifting Any GNN with Local Structure Awareness**
+Official code for **From Stars to Subgraphs: Uplifting Any GNN with Local Structure Awareness**
 
 On the way to release! 
 
