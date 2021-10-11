@@ -19,10 +19,9 @@ conda install pyg=$PYG -c pyg -c conda-forge -y
 pip install ogb
 
 # install rdkit
-conda install -c conda-forge rdkit
+conda install -c conda-forge rdkit -y
 
-
-# install
+# update yacs and tensorboard
 pip install yacs==0.1.8 --force  # PyG currently use 0.1.6 which doesn't support None argument. 
 pip install tensorboard
 
