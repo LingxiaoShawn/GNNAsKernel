@@ -29,6 +29,7 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
     for run in range(1, cfg.train.runs+1):
         # 3. create model and opt
         model = create_model(cfg).to(cfg.device)
+        # print(f"Number of parameters: {count_parameters(model)}")
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train.lr, weight_decay=cfg.train.wd)
         scheduler = StepLR(optimizer, step_size=cfg.train.lr_patience, gamma=cfg.train.lr_decay)
@@ -105,3 +106,10 @@ def set_random_seed(seed=0, cuda_deterministic=True):
         torch.backends.cudnn.benchmark = True
         warnings.warn('You have chosen to seed training WITHOUT CUDNN deterministic. '
                        'This is much faster but less reproducible')
+
+
+def count_parameters(model):
+    # For counting number of parameteres: need to remove unnecessary DiscreteEncoder, and other additional unused params
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+

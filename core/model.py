@@ -89,6 +89,14 @@ class SubgraphGNNKernel(nn.Module):
         self.gate_mapper_centroid = nn.Sequential(nn.Linear(hop_dim, nout), nn.Sigmoid()) # add this one to scale centroid embedding
         self.subsampling = subsampling
 
+        # for correctly counting number of parameters
+        # self.centroid_transform = Identity()
+        # self.subgraph_transform = Identity()
+        # self.context_transform = Identity()
+        # self.gate_mapper_context = Identity()
+        # self.gate_mapper_centroid = Identity()
+        # self.out_encoder = Identity()
+
         # dropout = 0
         self.dropout = dropout
         self.online = online
@@ -120,7 +128,11 @@ class SubgraphGNNKernel(nn.Module):
 
         combined_subgraphs_x = torch.cat([gnn(combined_subgraphs_x, combined_subgraphs_edge_index, combined_subgraphs_edge_attr, combined_subgraphs_batch)
                                           for gnn in self.gnns], dim=-1) # -1 dim = nout
-
+        # for correctly counting number of parameters
+        # subgraph_x = combined_subgraphs_x
+        # subgraph_x = subgraph_x * self.gate_mapper_subgraph(hop_emb)
+        # x = scatter(subgraph_x, combined_subgraphs_batch, dim=0, reduce=self.pooling)
+        
         if self.subsampling and self.training:
             centroid_x_selected = combined_subgraphs_x[(data.subgraphs_nodes_mapper == data.selected_supernodes[combined_subgraphs_batch])]
             subgraph_x_selected = self.subgraph_transform(F.dropout(combined_subgraphs_x, self.dropout, training=self.training)) if len(self.embs) > 1 else combined_subgraphs_x
@@ -218,8 +230,9 @@ class GNNAsKernel(nn.Module):
         # traditional layers: for comparison 
         if gnn_types[0] != 'PPGN':
             self.traditional_gnns = nn.ModuleList([getattr(gnn_wrapper, gnn_types[0])(nhid, nhid, bias=not bn) for _ in range(nlayer_outer)])
+            # For correctly counting number of parameters
+            # self.traditional_gnns = nn.ModuleList(Identity() for _ in range(nlayer_outer))
         else:
-            # currently not support PPGN! 
             self.traditional_gnns = nn.ModuleList(PPGN(nhid, nhid, nlayer_ppgn) for _ in range(nlayer_outer))
         # virtual node
         if vn:

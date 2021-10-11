@@ -15,6 +15,13 @@ conda install pytorch=$TORCH torchvision torchaudio cudatoolkit=$cuda -c pytorch
 # install pyg2.0
 conda install pyg=$PYG -c pyg -c conda-forge -y
 
+# install ogb 
+pip install ogb
+
+# install rdkit
+conda install -c conda-forge rdkit
+
+
 # install
 pip install yacs==0.1.8 --force  # PyG currently use 0.1.6 which doesn't support None argument. 
 pip install tensorboard

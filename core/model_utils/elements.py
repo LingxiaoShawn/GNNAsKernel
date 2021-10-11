@@ -16,7 +16,7 @@ class Identity(nn.Module):
 
 
 class DiscreteEncoder(nn.Module):
-    def __init__(self, hidden_channels, max_num_features=10, max_num_values=500):
+    def __init__(self, hidden_channels, max_num_features=10, max_num_values=500): #10
         super().__init__()
         self.embeddings = nn.ModuleList([nn.Embedding(max_num_values, hidden_channels) 
                     for i in range(max_num_features)])
