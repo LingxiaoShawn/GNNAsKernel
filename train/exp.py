@@ -4,7 +4,7 @@ from core.train_helper import run
 from core.model import GNNAsKernel
 from core.transform import SubgraphsTransform
 
-from core.data import PlanarSATPairsDataset
+from core.data import PlanarSATPairsDataset, calculate_stats
 
 def create_dataset(cfg): 
     # No need to do offline transformation
@@ -27,7 +27,7 @@ def create_dataset(cfg):
                                         sampling_mode=None, 
                                         random_init=False)
 
-    root = 'data/exp'
+    root = 'data/EXP'
     dataset = PlanarSATPairsDataset(root, transform=transform)
     dataset_list = [x for x in dataset] 
 
@@ -39,6 +39,9 @@ def create_dataset(cfg):
         train_dataset = dataset
     val_dataset = dataset_list
     test_dataset = dataset_list
+    print('------------All--------------')
+    calculate_stats(dataset)
+    exit(0)
     return train_dataset, val_dataset, test_dataset
 
 def create_model(cfg):

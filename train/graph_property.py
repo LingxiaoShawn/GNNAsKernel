@@ -4,7 +4,7 @@ from core.train_helper import run
 from core.model import GNNAsKernel
 from core.transform import SubgraphsTransform
 
-from core.data import GraphPropertyDataset
+from core.data import GraphPropertyDataset, calculate_stats
 import numpy as np
 
 def create_dataset(cfg): 
@@ -39,6 +39,14 @@ def create_dataset(cfg):
         train_dataset = [x for x in train_dataset]
     val_dataset = [x for x in val_dataset] 
     test_dataset = [x for x in test_dataset] 
+    
+    print('------------Train--------------')
+    calculate_stats(train_dataset)
+    print('------------Validation--------------')
+    calculate_stats(val_dataset)
+    print('------------Test--------------')
+    calculate_stats(test_dataset)
+    # exit(0)
 
     return train_dataset, val_dataset, test_dataset
 

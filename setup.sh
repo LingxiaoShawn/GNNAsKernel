@@ -24,6 +24,7 @@ conda install -c conda-forge rdkit -y
 # update yacs and tensorboard
 pip install yacs==0.1.8 --force  # PyG currently use 0.1.6 which doesn't support None argument. 
 pip install tensorboard
+pip install matplotlib
 
 # install jupyter and ipython 
 conda install -c conda-forge nb_conda -y
