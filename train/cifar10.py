@@ -7,6 +7,7 @@ from core.transform import SubgraphsTransform
 from torch_geometric.transforms import Compose
 from torch_geometric.datasets import GNNBenchmarkDataset
 from torch_geometric.utils import to_undirected
+from core.data import calculate_stats
 
 class SuperpixelTransform(object):
     # combine position and intensity feature, ignore edge value
@@ -51,6 +52,15 @@ def create_dataset(cfg):
         train_dataset = [x for x in train_dataset]
     val_dataset = [x for x in val_dataset] 
     test_dataset = [x for x in test_dataset] 
+
+    print('------------Train--------------')
+    calculate_stats(train_dataset)
+    print('------------Validation--------------')
+    calculate_stats(val_dataset)
+    print('------------Test--------------')
+    calculate_stats(test_dataset)
+    print('------------------------------')
+    # exit(0)
 
     return train_dataset, val_dataset, test_dataset
 

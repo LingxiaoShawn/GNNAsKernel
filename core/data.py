@@ -11,6 +11,7 @@ import networkx as nx
 # two more simulation dataset from PNA and SMP paper
 from core.data_utils.data_pna import GraphPropertyDataset
 from core.data_utils.data_cycles import CyclesDataset
+from core.data_utils.sbm_cliques import CliqueSBM
 
 class PlanarSATPairsDataset(InMemoryDataset):
     def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
@@ -139,6 +140,10 @@ class SRDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
+
+
+
+
 
 
 def calculate_stats(dataset):

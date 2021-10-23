@@ -43,7 +43,7 @@ def create_dataset(cfg):
     test_dataset = dataset_list
     print('------------All--------------')
     calculate_stats(dataset)
-    exit(0)
+    # exit(0)
     return train_dataset, val_dataset, test_dataset
 
 def create_model(cfg):

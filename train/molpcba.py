@@ -4,6 +4,7 @@ from core.config import cfg, update_cfg
 from core.train_helper import run 
 from core.model import GNNAsKernel
 from core.transform import SubgraphsTransform
+from core.data import calculate_stats
 
 from ogb.graphproppred import PygGraphPropPredDataset, Evaluator
 
@@ -39,7 +40,14 @@ def create_dataset(cfg):
         train_dataset = [x for x in train_dataset]
     val_dataset = [x for x in val_dataset] 
     test_dataset = [x for x in test_dataset] 
-
+    print('------------Train--------------')
+    calculate_stats(train_dataset)
+    print('------------Validation--------------')
+    calculate_stats(val_dataset)
+    print('------------Test--------------')
+    calculate_stats(test_dataset)
+    print('------------------------------')
+    # exit(0)
     return train_dataset, val_dataset, test_dataset
 
 def create_model(cfg):
