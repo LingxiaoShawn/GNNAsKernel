@@ -9,8 +9,8 @@ class PPGN(nn.Module):
         # First part - sequential mlp blocks
         self.reg_blocks = nn.ModuleList([RegularBlock(nin, nin, depth_of_mlp) for i in range(nlayer)])
         # Second part
-        self.norm = Identity() # 
-        # self.norm = nn.BatchNorm1d(2*nin)
+        # self.norm = Identity() # 
+        self.norm = nn.BatchNorm1d(2*nin)
         self.output_encoder = MLP(2*nin, nout, nlayer=2, with_final_activation=False)
 
     def reset_parameters(self):
