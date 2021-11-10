@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_scatter import scatter
 import core.model_utils.pyg_gnn_wrapper as gnn_wrapper 
-from core.model_utils.elements import MLP, DiscreteEncoder, Identity, Aggregator, VNAgg
+from core.model_utils.elements import MLP, DiscreteEncoder, Identity, Aggregator, VNUpdate
 from core.model_utils.ppgn import PPGN
 from torch_geometric.nn.inits import reset
 
@@ -234,10 +234,8 @@ class GNNAsKernel(nn.Module):
             # self.traditional_gnns = nn.ModuleList(Identity() for _ in range(nlayer_outer))
         else:
             self.traditional_gnns = nn.ModuleList(PPGN(nhid, nhid, nlayer_ppgn) for _ in range(nlayer_outer))
-        # virtual node
-        if vn:
-            self.v0 = nn.Parameter(torch.zeros(1, nhid), requires_grad=True)
-            self.vn_aggregator = VNAgg(nhid)
+       # virtual node
+        self.vn_aggregators = nn.ModuleList([VNUpdate(nhid) for _ in range(nlayer_outer)])
 
         # record params
         self.gnn_type = gnn_types[0]
@@ -254,34 +252,28 @@ class GNNAsKernel(nn.Module):
     def reset_parameters(self):
         self.input_encoder.reset_parameters()
         self.output_decoder.reset_parameters()
-        for edge_encoder, layer, norm, old in zip(self.edge_encoders, self.subgraph_layers, self.norms, self.traditional_gnns):
+        for edge_encoder, layer, norm, old, vn in zip(self.edge_encoders, self.subgraph_layers, self.norms, self.traditional_gnns, self.vn_aggregators):
             edge_encoder.reset_parameters()
             layer.reset_parameters()
             norm.reset_parameters()
             old.reset_parameters()
-        if self.vn:
-            self.vn_aggregator.reset_parameters()
-            torch.nn.init.constant_(self.v0, 0)
+            vn.reset_parameters()
+
 
     def forward(self, data):
-
         x = self.input_encoder(data.x.squeeze())
         # TODO: rethink how to deal with edge_attr = None
         ori_edge_attr = data.edge_attr 
         if ori_edge_attr is None:
             ori_edge_attr = data.edge_index.new_zeros(data.edge_index.size(-1))
 
-        if self.vn:
-            virtual_node = self.v0.expand(data.num_graphs, self.v0.shape[-1])
-            x = x + virtual_node[data.batch]
-
         previous_x = x # for residual connection
-        for i, (edge_encoder, subgraph_layer, normal_gnn, norm) in enumerate(zip(self.edge_encoders, 
-                                        self.subgraph_layers, self.traditional_gnns, self.norms)):
+        virtual_node = None
+        for i, (edge_encoder, subgraph_layer, normal_gnn, norm, vn_aggregator) in enumerate(zip(self.edge_encoders, 
+                                        self.subgraph_layers, self.traditional_gnns, self.norms, self.vn_aggregators)):
             # if ori_edge_attr is not None: # Encode edge attr for each layer
             data.edge_attr = edge_encoder(ori_edge_attr) 
             data.x = x
-            # with record_function(f"gnn conv {i}"):
             if self.num_inner_layers == 0: 
                 # standard message passing nn 
                 if self.gnn_type == 'PPGN':
@@ -301,14 +293,18 @@ class GNNAsKernel(nn.Module):
             x = F.relu(x)
             x = F.dropout(x, self.dropout, training=self.training)
 
+            if self.vn:
+                virtual_node, x = vn_aggregator(virtual_node, x, data.batch)
+
             if self.res:
                 x += previous_x
                 previous_x = x # for residual connection
             
-            if self.vn:
-                virtual_node = self.vn_aggregator(virtual_node, x, data.batch)
-                virtual_node = F.dropout(virtual_node, self.dropout, training=self.training)
-                x = x + virtual_node[data.batch]
+            # if self.vn and i < len(self.subgraph_layers) - 1:
+            #     virtual_node, x = vn_aggregator(virtual_node, x, data.batch)
+                # virtual_node = self.vn_aggregator(virtual_node, x, data.batch)
+                # virtual_node = F.dropout(virtual_node, self.dropout, training=self.training)
+                # x = x + virtual_node[data.batch]
 
         if not self.node_embedding:
             # TODO: maybe use a transformation layer before scatter?s

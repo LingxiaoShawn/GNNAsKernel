@@ -82,6 +82,67 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
     print(f'Final Vali: {vali_perf.mean():.4f} ± {vali_perf.std():.4f}, Final Test: {test_perf.mean():.4f} ± {test_perf.std():.4f},'
                 f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
 
+def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k=10):
+    if cfg.seed is not None:
+        set_random_seed(cfg.seed)
+        cfg.train.runs = 1 # no need to run same seed multiple times 
+
+    writer, logger, config_string = config_logger(cfg)
+    dataset = create_dataset(cfg)
+    test_perfs = []
+    for fold, (train_idx, test_idx) in enumerate(zip(*k_fold(dataset, k))):
+        train_loader = DataLoader(dataset[train_idx], cfg.train.batch_size, shuffle=True, num_workers=cfg.num_workers)
+        test_loader = DataLoader(dataset[test_idx],  cfg.train.batch_size//cfg.sampling.batch_factor, shuffle=False, num_workers=cfg.num_workers)
+
+        model = create_model(cfg).to(cfg.device)
+        model.reset_parameters()
+
+        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train.lr, weight_decay=cfg.train.wd)
+        scheduler = StepLR(optimizer, step_size=cfg.train.lr_patience, gamma=cfg.train.lr_decay)
+
+        start_outer = time.time()
+        best_test_perf = test_perf = float('-inf')
+        for epoch in range(1, cfg.train.epochs+1):
+            start = time.time()
+            model.train()
+            train_loss = train(train_loader, model, optimizer, device=cfg.device)
+            scheduler.step()
+            memory_allocated = torch.cuda.max_memory_allocated(cfg.device) // (1024 ** 2)
+            memory_reserved = torch.cuda.max_memory_reserved(cfg.device) // (1024 ** 2)
+
+            model.eval()
+            test_perf = test(test_loader, model, evaluator=evaluator, device=cfg.device) 
+            best_test_perf = test_perf if test_perf > best_test_perf else best_test_perf
+  
+            time_per_epoch = time.time() - start 
+
+            # logger here
+            print(f'Epoch/Fold: {epoch:03d}/{fold}, Train Loss: {train_loss:.4f}, '
+                  f'Test: {best_test_perf:.4f}, Seconds: {time_per_epoch:.4f}, '
+                  f'Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
+
+            # logging training
+            writer.add_scalar(f'Fold{fold}/train-loss', train_loss, epoch)
+            writer.add_scalar(f'Fold{fold}/test-best-perf', test_perf, epoch)
+            writer.add_scalar(f'Fold{fold}/seconds', time_per_epoch, epoch)   
+            writer.add_scalar(f'Fold{fold}/memory', memory_allocated, epoch)   
+
+            torch.cuda.empty_cache() # empty test part memory cost
+
+        time_average_epoch = time.time() - start_outer
+        print(f'Fold {fold}, Test: {best_test_perf}, Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
+        test_perfs.append(best_test_perf)
+
+    test_perf = torch.tensor(test_perfs)
+    logger.info("-"*50)
+    logger.info(config_string)
+    logger.info(f'Final Test: {test_perf.mean():.4f} ± {test_perf.std():.4f},'
+                f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
+    print(f'Final Test: {test_perf.mean():.4f} ± {test_perf.std():.4f},'
+                f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
+
+
+
 import random, numpy as np
 import warnings
 def set_random_seed(seed=0, cuda_deterministic=True):
@@ -107,9 +168,22 @@ def set_random_seed(seed=0, cuda_deterministic=True):
         warnings.warn('You have chosen to seed training WITHOUT CUDNN deterministic. '
                        'This is much faster but less reproducible')
 
+from sklearn.model_selection import StratifiedKFold
+def k_fold(dataset, folds=10):
+    skf = StratifiedKFold(folds, shuffle=True, random_state=12345)
+
+    train_indices, test_indices = [], []
+    ys = dataset.data.y
+    # ys = [graph.y.item() for graph in dataset]
+    for train, test in skf.split(torch.zeros(len(dataset)), ys):
+        train_indices.append(torch.from_numpy(train).to(torch.long))
+        test_indices.append(torch.from_numpy(test).to(torch.long))
+        # train_indices.append(train)
+        # test_indices.append(test)
+    return train_indices, test_indices
+
+
 
 def count_parameters(model):
     # For counting number of parameteres: need to remove unnecessary DiscreteEncoder, and other additional unused params
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-

@@ -65,24 +65,26 @@ class MLP(nn.Module):
         #     x = x + previous_x  
         return x 
 
-
-class VNAgg(nn.Module):
+class VNUpdate(nn.Module):
     def __init__(self, dim, with_norm=BN):
+        """
+        Intermediate update layer for the virtual node
+        :param dim: Dimension of the latent node embeddings
+        :param config: Python Dict with the configuration of the CRaWl network
+        """
         super().__init__()
-        self.mlp = MLP(dim, dim, with_norm=with_norm)
-
-    def forward(self, virtual_node, embeddings, batch_vector):
-        if batch_vector.size(0) > 0:  # ...or the operation will crash for empty graphs
-            G = global_add_pool(embeddings, batch_vector)
-        else:
-            G = torch.zeros_like(virtual_node)
-        virtual_node = virtual_node + G
-        virtual_node = self.mlp(virtual_node)
-        return virtual_node
+        self.mlp = MLP(dim, dim, with_norm=with_norm, with_final_activation=True, bias=not BN)
 
     def reset_parameters(self):
         self.mlp.reset_parameters()
 
+    def forward(self, vn, x, batch):
+        G = global_add_pool(x, batch)
+        if vn is not None:
+            G += vn
+        vn = self.mlp(G)
+        x += vn[batch]
+        return vn, x
 
 #TODO: add general aggregator layer
 import torch

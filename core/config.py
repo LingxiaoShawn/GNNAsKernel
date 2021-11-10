@@ -66,7 +66,7 @@ def set_cfg(cfg):
     # What embedding to include
     cfg.model.embs = (0, 1, 2) # 0-Centroid, 1-Subgraph,  2-Context 
     # How to combine embs together when have more than 1 embs, choose from ['concat', 'add']
-    cfg.model.embs_combine_mode = 'add'
+    cfg.model.embs_combine_mode = 'concat'
     # Number of MLP layers in generating subgraph embeddings
     cfg.model.mlp_layers = 1
     # Whether combine with normal gnn, only used for random walk based subgraph which doesn't cover whole 1st hop

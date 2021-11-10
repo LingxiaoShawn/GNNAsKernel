@@ -1,0 +1,15 @@
+train:
+  batch_size: 64
+  lr_patience: 20
+  epochs: 125
+  # dropout: 0.3
+
+model:
+  hidden_size: 128
+  num_layers: 4
+  pool: add
+  embs: (0, 1, 2)
+  embs_combine_mode: 'concat'
+
+subgraph:
+  hops: 3
