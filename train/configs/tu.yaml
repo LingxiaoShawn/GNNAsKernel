@@ -1,5 +1,5 @@
 train:
-  batch_size: 64
+  batch_size: 32
   lr_patience: 20
   epochs: 125
   # dropout: 0.3
@@ -13,3 +13,7 @@ model:
 
 subgraph:
   hops: 3
+  # walk_length: 5
+  # walk_p: 1.
+  # walk_q: 1.
+  # walk_repeat: 4

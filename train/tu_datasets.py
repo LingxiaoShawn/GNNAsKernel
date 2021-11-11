@@ -15,6 +15,9 @@ class ToLong(object):
         return data
 
 def create_dataset(cfg):
+    torch.set_num_threads(cfg.num_workers)
+    dataset = TUDataset('data', cfg.dataset)
+
     transform = SubgraphsTransform(cfg.subgraph.hops, 
                                     walk_length=cfg.subgraph.walk_length, 
                                     p=cfg.subgraph.walk_p, 
@@ -25,27 +28,25 @@ def create_dataset(cfg):
                                     shortest_path_mode_stride=cfg.sampling.stride, 
                                     random_mode_sampling_rate=cfg.sampling.random_rate,
                                     random_init=True)
-    shutil.rmtree(f'data/{cfg.dataset}/processed', ignore_errors=True)
-    dataset = TUDataset('data', cfg.dataset)
-
+                                    
+    transform_eval = SubgraphsTransform(cfg.subgraph.hops, 
+                                        walk_length=cfg.subgraph.walk_length, 
+                                        p=cfg.subgraph.walk_p, 
+                                        q=cfg.subgraph.walk_q, 
+                                        repeat=cfg.subgraph.walk_repeat,
+                                        sampling_mode=None, 
+                                        random_init=False)
     if dataset.data.x is None:
-        cfg.n_in = None
         transform = Compose([Constant(value=1), ToLong(), transform])
-    else:
-        cfg.n_in = dataset.data.x.size(-1)
+        transform_eval = Compose([Constant(value=1), ToLong(), transform_eval])
+
+    cfg.n_in = None if dataset.data.x is None else dataset.data.x.size(-1) # continous feature when existing
+    cfg.n_in_edge = None if dataset.data.edge_attr is None else dataset.data.edge_attr.size(-1) # continous feature when existing
     cfg.n_out = dataset.num_classes
-    if dataset.data.edge_attr is None:
-        cfg.n_in_edge = None
-    else:
-        cfg.n_in_edge = dataset.data.edge_attr.size(-1)
-
-    torch.set_num_threads(cfg.num_workers)
-    shutil.rmtree(f'data/{cfg.dataset}/processed', ignore_errors=True)
-    dataset = TUDataset('data', cfg.dataset, pre_transform=transform)
-
+    
     print('------------Stats--------------')
     calculate_stats(dataset)
-    return dataset
+    return dataset, transform, transform_eval
 
 def create_model(cfg):
     model = GNNAsKernel(cfg.n_in, cfg.n_in_edge, 

@@ -88,11 +88,20 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
         cfg.train.runs = 1 # no need to run same seed multiple times 
 
     writer, logger, config_string = config_logger(cfg)
-    dataset = create_dataset(cfg)
+    dataset, transform, transform_eval = create_dataset(cfg)
     test_perfs = []
     for fold, (train_idx, test_idx) in enumerate(zip(*k_fold(dataset, k))):
-        train_loader = DataLoader(dataset[train_idx], cfg.train.batch_size, shuffle=True, num_workers=cfg.num_workers)
-        test_loader = DataLoader(dataset[test_idx],  cfg.train.batch_size//cfg.sampling.batch_factor, shuffle=False, num_workers=cfg.num_workers)
+        
+        train_dataset = dataset[train_idx]
+        test_dataset = dataset[test_idx]
+        train_dataset.transform = transform
+        test_dataset.transform = transform_eval
+        test_dataset = [x for x in test_dataset]
+        if (cfg.sampling.mode is None and cfg.subgraph.walk_length == 0) or (cfg.subgraph.online is False):
+            train_dataset = [x for x in train_dataset]
+
+        train_loader = DataLoader(train_dataset, cfg.train.batch_size, shuffle=True, num_workers=cfg.num_workers)
+        test_loader = DataLoader(test_dataset,  cfg.train.batch_size//cfg.sampling.batch_factor, shuffle=False, num_workers=cfg.num_workers)
 
         model = create_model(cfg).to(cfg.device)
         model.reset_parameters()

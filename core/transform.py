@@ -57,7 +57,8 @@ class SubgraphsTransform(object):
         subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense = extract_subgraphs(data.edge_index, data.num_nodes, self.num_hops,
                                                                                              self.walk_length, self.p, self.q, self.repeat)
         subgraphs_nodes, subgraphs_edges, hop_indicator = to_sparse(subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense)
-
+        # print(subgraphs_nodes_mask.sum(0))
+        # exit(0)
         if self.subsampling:
             selected_subgraphs, node_selected_times = subsampling_subgraphs(data.edge_index, 
                           subgraphs_nodes if self.sampling_mode != 'min_set_cover' else subgraphs_nodes_mask, data.num_nodes,

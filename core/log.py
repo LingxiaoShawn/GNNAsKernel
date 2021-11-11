@@ -37,7 +37,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
 
     # redirect stdout print, better for large scale experiments
     os.makedirs(os.path.join('logs', data_name), exist_ok=True)
-    sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
+    # sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
 
     # log configuration 
     print("-"*50)
