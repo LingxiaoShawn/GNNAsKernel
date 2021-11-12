@@ -8,10 +8,6 @@ model:
 subgraph:
   hops: 3
   online: True
-  # walk_length: 15
-  # walk_p: 1.
-  # walk_q: 4
-  # walk_repeat: 5
 train:
   epochs: 310
 
