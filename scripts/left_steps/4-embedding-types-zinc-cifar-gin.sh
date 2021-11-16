@@ -25,4 +25,4 @@
 
 
 python -m train.cifar10 model.embs "(0,1)" model.hops_dim 0 device 5 &
-python -m train.zinc model.embs "(0,1)" model.hops_dim 0 device 1 &
+python -m train.zinc model.embs "(0,1)" model.hops_dim 0 device 4 &

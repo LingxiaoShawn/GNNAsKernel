@@ -7,7 +7,7 @@ from core.transform import SubgraphsTransform
 from core.data import GraphCountDataset, calculate_stats
 
 def create_dataset(cfg): 
-    # torch.set_num_threads(cfg.num_workers)
+    torch.set_num_threads(cfg.num_workers)
     # No need to do offline transformation
     transform = SubgraphsTransform(cfg.subgraph.hops, 
                                    walk_length=cfg.subgraph.walk_length, 
@@ -39,14 +39,14 @@ def create_dataset(cfg):
     val_dataset = [x for x in val_dataset] 
     test_dataset = [x for x in test_dataset] 
 
-    print('------------All--------------')
-    calculate_stats(dataset)
-    print('------------Train--------------')
-    calculate_stats(train_dataset)
-    print('------------Validation--------------')
-    calculate_stats(val_dataset)
-    print('------------Test--------------')
-    calculate_stats(test_dataset)
+    # print('------------All--------------')
+    # calculate_stats(dataset)
+    # print('------------Train--------------')
+    # calculate_stats(train_dataset)
+    # print('------------Validation--------------')
+    # calculate_stats(val_dataset)
+    # print('------------Test--------------')
+    # calculate_stats(test_dataset)
     # exit(0)
 
     return train_dataset, val_dataset, test_dataset
