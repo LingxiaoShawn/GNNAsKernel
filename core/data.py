@@ -12,6 +12,7 @@ import networkx as nx
 from core.data_utils.data_pna import GraphPropertyDataset
 from core.data_utils.data_cycles import CyclesDataset
 from core.data_utils.sbm_cliques import CliqueSBM
+from core.data_utils.tudataset_gin_split import TUDatasetGINSplit
 
 class PlanarSATPairsDataset(InMemoryDataset):
     def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
@@ -124,7 +125,6 @@ class SRDataset(InMemoryDataset):
 
     def process(self):
         # Read data into huge `Data` list. 
-        b=self.processed_paths[0]   
         dataset = nx.read_graph6(self.raw_paths[0])
         data_list = []
         for i,datum in enumerate(dataset):
@@ -140,10 +140,6 @@ class SRDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
-
-
-
-
 
 
 def calculate_stats(dataset):

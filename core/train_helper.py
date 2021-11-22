@@ -83,14 +83,20 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
                 f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
 
 def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k=10):
-    if cfg.seed is not None:
-        set_random_seed(cfg.seed)
-        cfg.train.runs = 1 # no need to run same seed multiple times 
+    # if cfg.seed is not None:
 
     writer, logger, config_string = config_logger(cfg)
     dataset, transform, transform_eval = create_dataset(cfg)
+
+    if hasattr(dataset, 'train_indices'):
+        k_fold_indices = dataset.train_indices, dataset.test_indices
+    else:
+        k_fold_indices = k_fold(dataset, k)
+
     test_perfs = []
-    for fold, (train_idx, test_idx) in enumerate(zip(*k_fold(dataset, k))):
+    test_curves = []
+    for fold, (train_idx, test_idx) in enumerate(zip(*k_fold_indices)):
+        set_random_seed(0) # important 
         
         train_dataset = dataset[train_idx]
         test_dataset = dataset[test_idx]
@@ -111,6 +117,7 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
 
         start_outer = time.time()
         best_test_perf = test_perf = float('-inf')
+        test_curve = []
         for epoch in range(1, cfg.train.epochs+1):
             start = time.time()
             model.train()
@@ -121,18 +128,20 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
 
             model.eval()
             test_perf = test(test_loader, model, evaluator=evaluator, device=cfg.device) 
+            test_curve.append(test_perf.item())
             best_test_perf = test_perf if test_perf > best_test_perf else best_test_perf
   
             time_per_epoch = time.time() - start 
 
             # logger here
             print(f'Epoch/Fold: {epoch:03d}/{fold}, Train Loss: {train_loss:.4f}, '
-                  f'Test: {best_test_perf:.4f}, Seconds: {time_per_epoch:.4f}, '
+                  f'Test:{test_perf:.4f}, Best-Test: {best_test_perf:.4f}, Seconds: {time_per_epoch:.4f}, '
                   f'Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
 
             # logging training
             writer.add_scalar(f'Fold{fold}/train-loss', train_loss, epoch)
-            writer.add_scalar(f'Fold{fold}/test-best-perf', test_perf, epoch)
+            writer.add_scalar(f'Fold{fold}/test-perf', test_perf, epoch)
+            writer.add_scalar(f'Fold{fold}/test-best-perf', best_test_perf, epoch)
             writer.add_scalar(f'Fold{fold}/seconds', time_per_epoch, epoch)   
             writer.add_scalar(f'Fold{fold}/memory', memory_allocated, epoch)   
 
@@ -141,14 +150,37 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
         time_average_epoch = time.time() - start_outer
         print(f'Fold {fold}, Test: {best_test_perf}, Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
         test_perfs.append(best_test_perf)
+        test_curves.append(test_curve)
 
-    test_perf = torch.tensor(test_perfs)
     logger.info("-"*50)
     logger.info(config_string)
-    logger.info(f'Final Test: {test_perf.mean():.4f} ± {test_perf.std():.4f},'
-                f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
-    print(f'Final Test: {test_perf.mean():.4f} ± {test_perf.std():.4f},'
-                f'Seconds/epoch: {time_average_epoch/cfg.train.epochs}, Memory Peak: {memory_allocated} MB allocated, {memory_reserved} MB reserved.')
+    print(" ===== Final result 1, based on average of max validation  ========")
+    test_perf = torch.tensor(test_perfs)
+    msg = (
+        f'Dataset:        {cfg.dataset}\n'
+        f'Accuracy:       {test_perf.mean():.4f} ± {test_perf.std():.4f}\n'
+        f'Seconds/epoch:  {time_average_epoch/cfg.train.epochs}\n'
+        f'Memory Peak:    {memory_allocated} MB allocated, {memory_reserved} MB reserved.\n'
+        '-------------------------------\n')
+    logger.info(msg)
+    print(msg)  
+
+    logger.info("-"*50)
+    test_curves = torch.tensor(test_curves)
+    avg_test_curve = test_curves.mean(axis=0)
+    best_index = np.argmax(avg_test_curve)
+    mean_perf = avg_test_curve[best_index]
+    std_perf = test_curves.std(axis=0)[best_index]
+
+    print(" ===== Final result 2, based on average of validation curve ========")
+    msg = (
+        f'Dataset:        {cfg.dataset}\n'
+        f'Accuracy:       {mean_perf:.4f} ± {std_perf:.4f}\n'
+        f'Best epoch:     {best_index}\n'
+        '-------------------------------\n')
+    logger.info(msg)
+    print(msg)   
+
 
 
 
@@ -164,6 +196,9 @@ def set_random_seed(seed=0, cuda_deterministic=True):
     random.seed(seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
     if cuda_deterministic:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
