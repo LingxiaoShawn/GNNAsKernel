@@ -4,6 +4,15 @@ hiddens=(16 32 64)
 dropouts=(0 0.2 0.4)
 pools=(mean add)
 
+dataset=MUTAG
+########## Tuning GIN first 
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool add   device 0 &
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool mean  device 1 &
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 64  train.lr 0.01 model.pool add   device 2 &
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 32  train.lr 0.001 model.pool add  device 3 &
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool add  train.dropout 0.3   device 4 &
+python -m train.tu_datasets_gin_split model.mini_layers 0 dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool add  train.batch_size 32 device 5 &
+
 # python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01   device 0&
 # python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.001  device 1&
 # python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 64 model.embs_combine_mode 'add'    train.lr 0.01   device 2&
@@ -19,12 +28,12 @@ pools=(mean add)
 # python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01   device 4  model.embs "(0,2)" &
 # python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01   device 5  model.embs "(0,1,2)" &
 
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 64 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 0  model.mini_layers 1  subgraph.hops 3 &
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 64 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 1  model.mini_layers 1  subgraph.hops 3 &
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 128 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 2  model.mini_layers 1  subgraph.hops 3 &
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 128 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 3  model.mini_layers 1  subgraph.hops 3 &
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 4  model.mini_layers 1  subgraph.hops 3 &
-python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 5  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 64 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 0  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 64 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 1  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 128 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 2  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 128 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 3  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-5  device 4  model.mini_layers 1  subgraph.hops 3 &
+# python -m train.tu_datasets_gin_split dataset MUTAG model.hidden_size 32 model.embs_combine_mode 'add'    train.lr 0.01  train.wd 1e-4  device 5  model.mini_layers 1  subgraph.hops 3 &
 
 
 
