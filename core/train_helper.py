@@ -154,8 +154,9 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
 
     logger.info("-"*50)
     logger.info(config_string)
-    print(" ===== Final result 1, based on average of max validation  ========")
     test_perf = torch.tensor(test_perfs)
+    logger.info(" ===== Final result 1, based on average of max validation  ========")
+    print(" ===== Final result 1, based on average of max validation  ========")
     msg = (
         f'Dataset:        {cfg.dataset}\n'
         f'Accuracy:       {test_perf.mean():.4f} ± {test_perf.std():.4f}\n'
@@ -172,6 +173,7 @@ def run_k_fold(cfg, create_dataset, create_model, train, test, evaluator=None, k
     mean_perf = avg_test_curve[best_index]
     std_perf = test_curves.std(axis=0)[best_index]
 
+    logger.info(" ===== Final result 2, based on average of validation curve ========")
     print(" ===== Final result 2, based on average of validation curve ========")
     msg = (
         f'Dataset:        {cfg.dataset}\n'

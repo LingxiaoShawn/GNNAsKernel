@@ -1,7 +1,7 @@
 train:
   batch_size: 128
   lr_patience: 20
-  epochs: 150
+  epochs: 100 #150
   # dropout: 0.3
 
 model:
