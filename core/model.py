@@ -64,7 +64,6 @@ class SubgraphGNNKernel(nn.Module):
         use_hops = hop_dim > 0
         nhid = nout // len(gnn_types)
         self.hop_embedder = nn.Embedding(20, hop_dim)
-        # self.gnns = nn.ModuleList([GNN(nin+hop_dim if use_hops else nin, nhid, nlayer, gnn_type) for gnn_type in gnn_types])
         self.gnns = nn.ModuleList()
         for gnn_type in gnn_types:
             if gnn_type == 'PPGN':
@@ -72,13 +71,8 @@ class SubgraphGNNKernel(nn.Module):
             else:
                 gnn = GNN(nin+hop_dim if use_hops else nin, nhid, nlayer, gnn_type, dropout=dropout, res=res)
             self.gnns.append(gnn)
-        self.centroid_transform = MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
         self.subgraph_transform = MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
         self.context_transform =  MLP(nout, nout, nlayer=mlp_layers, with_final_activation=True)
-
-        # subsampling = True
-        self.out_encoder = MLP(nout if subsampling or embs_combine_mode=='add' else nout*len(embs), nout, nlayer=mlp_layers, 
-                               with_final_activation=False, bias=bias, with_norm=True)
 
         self.out_encoder = MLP(nout if embs_combine_mode=='add' else nout*len(embs), nout, nlayer=mlp_layers, 
                                with_final_activation=False, bias=bias, with_norm=True)
@@ -108,7 +102,6 @@ class SubgraphGNNKernel(nn.Module):
         self.hop_embedder.reset_parameters()
         for gnn in self.gnns:
             gnn.reset_parameters()
-        self.centroid_transform.reset_parameters()
         self.subgraph_transform.reset_parameters()
         self.context_transform.reset_parameters()
         self.out_encoder.reset_parameters()
@@ -236,6 +229,8 @@ class GNNAsKernel(nn.Module):
             self.traditional_gnns = nn.ModuleList(PPGN(nhid, nhid, nlayer_ppgn) for _ in range(nlayer_outer))
        # virtual node
         self.vn_aggregators = nn.ModuleList([VNUpdate(nhid) for _ in range(nlayer_outer)])
+        # For correctly counting number of parameters
+        # self.vn_aggregators = nn.ModuleList(Identity() for _ in range(nlayer_outer))
 
         # record params
         self.gnn_type = gnn_types[0]
@@ -299,12 +294,6 @@ class GNNAsKernel(nn.Module):
             if self.res:
                 x += previous_x
                 previous_x = x # for residual connection
-            
-            # if self.vn and i < len(self.subgraph_layers) - 1:
-            #     virtual_node, x = vn_aggregator(virtual_node, x, data.batch)
-                # virtual_node = self.vn_aggregator(virtual_node, x, data.batch)
-                # virtual_node = F.dropout(virtual_node, self.dropout, training=self.training)
-                # x = x + virtual_node[data.batch]
 
         if not self.node_embedding:
             # TODO: maybe use a transformation layer before scatter?s

@@ -30,6 +30,7 @@ def run(cfg, create_dataset, create_model, train, test, evaluator=None):
         # 3. create model and opt
         model = create_model(cfg).to(cfg.device)
         # print(f"Number of parameters: {count_parameters(model)}")
+        # exit(0)
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train.lr, weight_decay=cfg.train.wd)
         scheduler = StepLR(optimizer, step_size=cfg.train.lr_patience, gamma=cfg.train.lr_decay)
