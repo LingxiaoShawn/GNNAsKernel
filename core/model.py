@@ -256,7 +256,8 @@ class GNNAsKernel(nn.Module):
 
 
     def forward(self, data):
-        x = self.input_encoder(data.x.squeeze())
+        x = data.x if len(data.x.shape) <= 2 else data.x.squeeze(-1)
+        x = self.input_encoder(x)
         # TODO: rethink how to deal with edge_attr = None
         ori_edge_attr = data.edge_attr 
         if ori_edge_attr is None:
