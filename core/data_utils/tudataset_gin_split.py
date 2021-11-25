@@ -10,6 +10,7 @@ class TUDatasetGINSplit(InMemoryDataset):
     url = 'https://github.com/weihua916/powerful-gnns/raw/master/dataset.zip'
     def __init__(self, name, root='tudatasets_gin', transform=None, pre_transform=None):
         self.name = name
+        self.deg = True if name in ['IMDBBINARY', 'IMDBMULTI', 'REDDITBINARY', 'REDDITMULTI5K'] else False
         super(TUDatasetGINSplit, self).__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
         train_indices, test_indices = [], []
@@ -54,7 +55,7 @@ class TUDatasetGINSplit(InMemoryDataset):
 
 
     def process(self):
-        data, num_classes = read_gin_tudataset(self.raw_dir, self.name)
+        data, num_classes = read_gin_tudataset(self.raw_dir, self.name, self.deg)
         # self.num_classes = num_classes
         data_list = [Data(x=datum.node_features, edge_index=datum.edge_mat, y=torch.tensor(datum.label).unsqueeze(0).long()) for datum in data]
 
@@ -87,7 +88,7 @@ class S2VGraph(object):
 
         self.max_neighbor = 0
 
-def read_gin_tudataset(root, dataset):
+def read_gin_tudataset(root, dataset, degree_as_tag=False):
     print('loading data')
     g_list = []
     label_dict = {}
@@ -158,6 +159,10 @@ def read_gin_tudataset(root, dataset):
 
         deg_list = list(dict(g.g.degree(range(len(g.g)))).values())
         g.edge_mat = torch.LongTensor(edges).transpose(0,1)
+
+    if degree_as_tag:
+        for g in g_list:
+            g.node_tags = list(dict(g.g.degree).values())
 
     #Extracting unique tag labels   
     tagset = set([])
