@@ -144,30 +144,55 @@ dataset=NCI1
 dataset=IMDBBINARY
 
 ########## Tuning GIN first 
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool add   device 0 &
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool mean  device 1 &
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 64  train.lr 0.001  model.pool add  device 2 &
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 16  train.lr 0.001  model.pool add  device 3 &
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 128 dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool add  device 4 &
-python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool add  device 5 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool add   device 0 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool mean  device 1 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 64  train.lr 0.001  model.pool add  device 2 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 16  train.lr 0.001  model.pool add  device 3 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 128 dataset $dataset model.hidden_size 32  train.lr 0.001  model.pool add  device 4 &
+# python -m train.tu_datasets_gin_split model.mini_layers 0 train.batch_size 32  dataset $dataset model.hidden_size 32  train.lr 0.01 model.pool add  device 5 &
 
 # wait 
 
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(0,)" device 0 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(1,)" device 1 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(2,)" device 2 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(0,1)" device 3 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(0,2)" device 4 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool mean model.embs_combine_mode add model.embs "(1,2)" device 5 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(0,)" device 0 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(1,)" device 1 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(2,)" device 2 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(0,1)" device 3 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(0,2)" device 4 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add model.embs "(1,2)" device 5 &
 
 # wait 
 
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(0,)" device 0 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(1,)" device 1 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(2,)" device 2 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(0,1)" device 3 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(0,2)" device 4 &
-# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 32  train.lr 0.001 model.pool add model.embs_combine_mode add model.embs "(1,2)" device 5 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 16  model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add device 0 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 64  model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add device 1 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 128 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode add device 2 &
+
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 16  model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode concat device 3 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 64  model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode concat device 4 &
+# python -m train.tu_datasets_gin_split model.mini_layers 1 dataset $dataset train.batch_size 128 model.hidden_size 32  train.lr 0.01 model.pool add model.embs_combine_mode concat device 5 &
+
+
+# Next: study hops 
+
+# dataset=IMDBBINARY
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 6  subgraph.walk_repeat 4 device 0 &
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 8  subgraph.walk_repeat 3 device 1 &
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 10 subgraph.walk_repeat 3 device 2 &
+
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 5 subgraph.walk_repeat 4 device 3 train.dropout 0.25&
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 7 subgraph.walk_repeat 3 device 4 train.dropout 0.25&
+# python -m train.tu_datasets_gin_split num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 4 subgraph.walk_repeat 5 device 5 train.dropout 0.25&
+
+
+
+dataset=REDDIT-BINARY
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 6  subgraph.walk_repeat 5 device 0 &
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 8  subgraph.walk_repeat 4 device 1 &
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 10 subgraph.walk_repeat 3 device 2 &
+
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 model.pool mean dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 6  subgraph.walk_repeat 5 device 3 &
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 model.pool mean dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 8  subgraph.walk_repeat 4 device 4 &
+python -m train.tu_datasets num_workers 12 model.mini_layers 1 model.pool mean dataset $dataset train.batch_size 32 model.hidden_size 128  train.lr 0.01 subgraph.hops 0 subgraph.walk_length 10 subgraph.walk_repeat 3 device 5 &
+
 
 
 
