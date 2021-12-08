@@ -258,6 +258,7 @@ class GNNAsKernel(nn.Module):
     def forward(self, data):
         x = data.x if len(data.x.shape) <= 2 else data.x.squeeze(-1)
         x = self.input_encoder(x)
+
         # TODO: rethink how to deal with edge_attr = None
         ori_edge_attr = data.edge_attr 
         if ori_edge_attr is None:
@@ -278,10 +279,11 @@ class GNNAsKernel(nn.Module):
                     x = normal_gnn(data.x, data.edge_index, data.edge_attr)
             else:
                 if self.use_normal_gnn:
+                    edge_attr = data.edge_attr[:,:-self.hop_dim] if self.hop_dim > 0 else data.edge_attr
                     if self.gnn_type == 'PPGN':
-                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, data.edge_attr[:,:-self.hop_dim], data.batch)
+                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, edge_attr, data.batch)
                     else:
-                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, data.edge_attr[:,:-self.hop_dim])
+                        x = subgraph_layer(data) + normal_gnn(data.x, data.edge_index, edge_attr)
                 else:
                     x = subgraph_layer(data)
 
