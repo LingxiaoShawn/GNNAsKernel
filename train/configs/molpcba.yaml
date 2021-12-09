@@ -1,0 +1,19 @@
+dataset: ogbg-molpcba
+
+model:
+  hidden_size: 400
+  pool: mean
+  num_layers: 5
+  mini_layers: 1
+  embs: (1,)
+  embs_combine_mode: add
+  mlp_layers: 1
+
+subgraph:
+  hops: 3
+
+train:
+  dropout: 0.5
+  lr_patience: 25 
+  epochs: 105
+

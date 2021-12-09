@@ -1,0 +1,13 @@
+dataset: count_substructures
+model:
+  mini_layers: 1
+  num_layers: 6
+  embs: (0,1,2)
+  embs_combine_mode: concat
+subgraph:
+  hops: 2
+train:
+  lr_patience: 40
+  epochs: 250
+  runs: 2
+  

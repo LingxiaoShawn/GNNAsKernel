@@ -1,0 +1,14 @@
+dataset: clique_sbm
+task: 1
+model:
+  mini_layers: 1
+  num_layers: 6
+  embs: (0,1,2)
+  embs_combine_mode: concat
+subgraph:
+  hops: 3
+train:
+  batch_size: 128
+  lr_patience: 40
+  epochs: 300
+  runs: 3

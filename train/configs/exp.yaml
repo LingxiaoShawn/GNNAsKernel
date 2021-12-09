@@ -1,0 +1,10 @@
+dataset: exp-classify
+model:
+  num_layers: 4
+  mini_layers: 2
+  embs: (0, 1, 2)
+  embs_combine_mode: 'concat'
+  pool: add
+subgraph:
+  hops: 2
+  online: True

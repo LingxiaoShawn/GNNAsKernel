@@ -1,0 +1,16 @@
+dataset: CIFAR10
+num_workers: 10
+model:
+  num_layers: 4
+  mini_layers: 1
+  hidden_size: 128
+  embs: (0, 1, 2)
+  embs_combine_mode: 'concat'
+  mlp_layers: 2
+  pool: add
+subgraph:
+  hops: 2
+  online: True
+train:
+  lr_patience: 35
+  epochs: 75

@@ -1,0 +1,8 @@
+sampling:
+  mode: shortest_path
+  redundancy: 3
+  stride: 5 
+  batch_factor: 4
+  # mode: min_set_cover
+  # redundancy: 3
+  # batch_factor: 8

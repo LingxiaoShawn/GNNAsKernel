@@ -1,0 +1,5 @@
+sampling:
+  mode: random
+  redundancy: 3
+  random_rate: 0.2 
+  batch_factor: 8

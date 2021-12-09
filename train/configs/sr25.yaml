@@ -1,0 +1,14 @@
+dataset: sr25-classify
+model:
+  num_layers: 2
+  mini_layers: 2
+  embs: (0, 1, 2)
+  embs_combine_mode: 'concat'
+  pool: add
+subgraph:
+  hops: 1
+  online: True
+train:
+  lr: 0.002
+  epochs: 305
+  runs: 1
