@@ -40,6 +40,15 @@ pip install matplotlib
 
 ```
 
+## Code structure
+``core/`` contains all source code.   
+``train/`` contains all scripts for available datasets.  
+
+* Subgraph extraction is implemented as data transform operator in PyG. See ``core/transform.py``. The transform layer will built the mapping from original nodes and edges to all subgraphs.  
+* The mappings are used directly in ``GNN-AK(+)`` to online build the combined subgraphs for each graph, see ``core/model.py``. (For each graph with N node, N subgraphs are combined to a gaint subgraph first. Then for batch, all combined gaint subgraphs are combined again.) 
+* SubgraphDrop is implemented inside ``core/transform.py``, see [here]( https://github.com/GNNAsKernel/GNNAsKernel/blob/f642cd1c8b4f9ef5005f24a4a36b2e8c2147b36a/core/transform.py#L62).   
+
+
 ## Hyperparameters 
 
 See ``core/config.py`` for all options. 
@@ -114,6 +123,24 @@ python -m train.zinc subgraph.hops 3      # 3-hop egonet
 # Run with random-walk subgraphs based on node2vec 
 python -m train.zinc subgraph.hops 0 subgraph.walk_length 10 subgraph.walk_p 1.0 subgraph.walk_q 1.0  
 ```
+
+## Run GNN-AK(+) with SubgraphDrop
+
+See option ``sampling`` section under ``core/config.py``.
+
+Change ``sampling.redundancy``(R in the paper) to change the resource usage.
+```
+python -m train.zinc sampling.mode shortest_path sampling.redundancy 1 sampling.stride 5 sampling.batch_factor 4
+python -m train.zinc sampling.mode shortest_path sampling.redundancy 3 sampling.stride 5 sampling.batch_factor 4
+python -m train.zinc sampling.mode shortest_path sampling.redundancy 5 sampling.stride 5 sampling.batch_factor 4
+
+
+python -m train.cifar10 sampling.mode random sampling.redundancy 1 sampling.random_rate 0.07 sampling.batch_factor 8 
+python -m train.cifar10 sampling.mode random sampling.redundancy 3 sampling.random_rate 0.21 sampling.batch_factor 8 
+python -m train.cifar10 sampling.mode random sampling.redundancy 5 sampling.random_rate 0.35 sampling.batch_factor 8 
+## Note: sampling.random_rate = 0.07*sampling.redundancy. 0.07 is set based on dataset. 
+```
+
 
 
 ## Results 
