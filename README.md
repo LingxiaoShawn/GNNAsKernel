@@ -46,7 +46,7 @@ pip install matplotlib
 
 * Subgraph extraction is implemented as data transform operator in PyG. See ``core/transform.py``. The transform layer will built the mapping from original nodes and edges to all subgraphs.  
 * The mappings are used directly in ``GNN-AK(+)`` to online build the combined subgraphs for each graph, see ``core/model.py``. (For each graph with N node, N subgraphs are combined to a gaint subgraph first. Then for batch, all combined gaint subgraphs are combined again.) 
-* SubgraphDrop is implemented inside ``core/transform.py``, see [here]( https://github.com/GNNAsKernel/GNNAsKernel/blob/f642cd1c8b4f9ef5005f24a4a36b2e8c2147b36a/core/transform.py#L62).   
+* SubgraphDrop is implemented inside ``core/transform.py``, see [here]( https://github.com/GNNAsKernel/GNNAsKernel/blob/f642cd1c8b4f9ef5005f24a4a36b2e8c2147b36a/core/transform.py#L62). And the [usage](https://github.com/GNNAsKernel/GNNAsKernel/blob/f88861ec32d211f0392cae2c782ad9950aeaa601/core/model.py#L128) in ``core/model.py``. 
 
 
 ## Hyperparameters 
