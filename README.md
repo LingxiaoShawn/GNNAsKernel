@@ -1,20 +1,11 @@
 # GNNAsKernel
 Official code for **From Stars to Subgraphs: Uplifting Any GNN with Local Structure Awareness**
 
-On the way to release! 
-
 ## Visualizations
 ### GNN-AK(+)
 ![GNN-AK](./figs/GNN-AK.png)
 ### GNN-AK(+) with SubgraphDrop 
 ![GNN-AK-S: GNN-AK with SubgraphDrop](./figs/GNN-AK-S.png)
-
-## Results 
-### GNN-AK boosts expressiveness
-![GNN-AK boosts expressiveness](./figs/simulation.png)
-### GNN-AK boosts practical performance
-![GNN-AK boosts practical performance](./figs/real-world.png)
-
 
 ## Setup 
 
@@ -125,7 +116,14 @@ python -m train.zinc subgraph.hops 0 subgraph.walk_length 10 subgraph.walk_p 1.0
 ```
 
 
-# Cite
+## Results 
+### GNN-AK boosts expressiveness
+![GNN-AK boosts expressiveness](./figs/simulation.png)
+### GNN-AK boosts practical performance
+![GNN-AK boosts practical performance](./figs/real-world.png)
+
+
+## Cite
 Please cite our work if you use our code!
 
 ```
