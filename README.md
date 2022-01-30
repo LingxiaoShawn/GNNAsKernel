@@ -130,13 +130,12 @@ Please cite our work if you use our code!
 
 ```
 @inproceedings{
-anonymous2022from,
-title={From Stars to Subgraphs: Uplifting Any {GNN} with Local Structure Awareness},
-author={Anonymous},
-booktitle={Submitted to The Tenth International Conference on Learning Representations },
-year={2022},
-url={https://openreview.net/forum?id=Mspk_WYKoEH},
-note={under review}
+    zhao2022from,
+    title={From Stars to Subgraphs: Uplifting Any {GNN} with Local Structure Awareness},
+    author={Lingxiao Zhao and Wei Jin and Leman Akoglu and Neil Shah},
+    booktitle={International Conference on Learning Representations},
+    year={2022},
+    url={https://openreview.net/forum?id=Mspk_WYKoEH}
 }
 ```
 
