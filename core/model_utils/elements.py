@@ -30,7 +30,7 @@ class DiscreteEncoder(nn.Module):
             x = x.unsqueeze(1)
         out = 0
         for i in range(x.size(1)):
-            out += self.embeddings[i](x[:, i])
+            out = out + self.embeddings[i](x[:, i])
         return out
 
 class MLP(nn.Module):
@@ -81,7 +81,7 @@ class VNUpdate(nn.Module):
     def forward(self, vn, x, batch):
         G = global_add_pool(x, batch)
         if vn is not None:
-            G += vn
+            G = G + vn
         vn = self.mlp(G)
-        x += vn[batch]
+        x = x + vn[batch]
         return vn, x

@@ -11,21 +11,18 @@ Official code for [**From Stars to Subgraphs: Uplifting Any GNN with Local Struc
 
 ```
 # params
-# 10/6/2021, newest packages. 
+# 10/6/2022, newest packages. 
 ENV=gnn_ak
-CUDA=11.1
-TORCH=1.9.1
-PYG=2.0.1
 
 # create env 
-conda create --name $ENV python=3.9 -y
+conda create --name $ENV python=3.10 -y
 conda activate $ENV
 
 # install pytorch 
-conda install pytorch=$TORCH torchvision torchaudio cudatoolkit=$cuda -c pytorch -c nvidia -y
+conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
 
-# install pyg2.0
-conda install pyg=$PYG -c pyg -c conda-forge -y
+# install pyg
+conda install pyg -c pyg
 
 # install ogb 
 pip install ogb
@@ -37,6 +34,9 @@ conda install -c conda-forge rdkit -y
 pip install yacs==0.1.8 --force  # PyG currently use 0.1.6 which doesn't support None argument. 
 pip install tensorboard
 pip install matplotlib
+
+# install jupyter and ipython 
+conda install -c conda-forge nb_conda -y
 
 ```
 
