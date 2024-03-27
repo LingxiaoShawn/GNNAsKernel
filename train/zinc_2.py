@@ -1,21 +1,17 @@
-
 import torch
 from core.config import cfg, update_cfg
-from core.train_helper import run 
-from core.model import GNNAsKernel
-from core.transform import SubgraphsTransform
-
-from torch_geometric.datasets import ZINC
-from core.data import calculate_stats
 from core.transform_utils.EVD_transform import EVDTransform
+from core.transform_utils.combine_transforms import CombineTransforms
+from core.transform import SubgraphsTransform
+from torch_geometric.datasets import ZINC
+from core.train_helper import run 
+
+from core.model_enhanced import GNNAsKernelEnhanced
 
 def create_dataset(cfg): 
     torch.set_num_threads(cfg.num_workers)
     pre_transform = EVDTransform()
-    # if cfg.subgraph.FGSD:
-    #     cfg.model.hops_dim = 0
-    # No need to do offline transformation
-    transform = SubgraphsTransform(cfg.subgraph.hops, 
+    transform_1 = SubgraphsTransform(cfg.subgraph.hops, 
                                    walk_length=cfg.subgraph.walk_length, 
                                    p=cfg.subgraph.walk_p, 
                                    q=cfg.subgraph.walk_q, 
@@ -25,46 +21,40 @@ def create_dataset(cfg):
                                    shortest_path_mode_stride=cfg.sampling.stride, 
                                    random_mode_sampling_rate=cfg.sampling.random_rate,
                                    random_init=True,
-                                   FGSD=cfg.subgraph.FGSD,
+                                   FGSD=False,
                                    FGSD_k=cfg.subgraph.FGSD_k,
                                    FGSD_p=cfg.subgraph.FGSD_p,
                                    FGSD_q=cfg.subgraph.FGSD_q)
-
-    transform_eval = SubgraphsTransform(cfg.subgraph.hops, 
-                                        walk_length=cfg.subgraph.walk_length, 
-                                        p=cfg.subgraph.walk_p, 
-                                        q=cfg.subgraph.walk_q, 
-                                        repeat=cfg.subgraph.walk_repeat,
-                                        sampling_mode=None, 
-                                        random_init=False,
-                                        FGSD=cfg.subgraph.FGSD,
-                                        FGSD_k=cfg.subgraph.FGSD_k,
-                                        FGSD_p=cfg.subgraph.FGSD_p,
-                                        FGSD_q=cfg.subgraph.FGSD_q)
-
+    transform_2 = SubgraphsTransform(cfg.subgraph.hops, 
+                                   walk_length=cfg.subgraph.walk_length, 
+                                   p=cfg.subgraph.walk_p, 
+                                   q=cfg.subgraph.walk_q, 
+                                   repeat=cfg.subgraph.walk_repeat,
+                                   sampling_mode=cfg.sampling.mode, 
+                                   minimum_redundancy=cfg.sampling.redundancy, 
+                                   shortest_path_mode_stride=cfg.sampling.stride, 
+                                   random_mode_sampling_rate=cfg.sampling.random_rate,
+                                   random_init=True,
+                                   FGSD=True,
+                                   FGSD_k=cfg.subgraph.FGSD_k,
+                                   FGSD_p=cfg.subgraph.FGSD_p,
+                                   FGSD_q=cfg.subgraph.FGSD_q)
+                                   
+    combined_transform = CombineTransforms([transform_1, transform_2])
     root = 'data/ZINC'
-    train_dataset = ZINC(root, subset=True, split='train', pre_transform=pre_transform, transform=transform)
-    val_dataset = ZINC(root, subset=True, split='val', pre_transform=pre_transform, transform=transform_eval) 
-    test_dataset = ZINC(root, subset=True, split='test', pre_transform=pre_transform, transform=transform_eval)   
+    train_dataset = ZINC(root, subset=True, split='train', pre_transform=pre_transform, transform=combined_transform)
+    val_dataset = ZINC(root, subset=True, split='val', pre_transform=pre_transform, transform=combined_transform) 
+    test_dataset = ZINC(root, subset=True, split='test', pre_transform=pre_transform, transform=combined_transform)   
 
-    # When without randomness, transform the data to save a bit time
     if (cfg.sampling.mode is None and cfg.subgraph.walk_length == 0) or (cfg.subgraph.online is False):
         train_dataset = [x for x in train_dataset]
     val_dataset = [x for x in val_dataset] 
     test_dataset = [x for x in test_dataset] 
 
-    # print('------------Train--------------')
-    # calculate_stats(train_dataset)
-    # print('------------Validation--------------')
-    # calculate_stats(val_dataset)
-    # print('------------Test--------------')
-    # calculate_stats(test_dataset)
-    # print('------------------------------')
-
     return train_dataset, val_dataset, test_dataset
 
 def create_model(cfg):
-    model = GNNAsKernel(None, None, 
+    model = GNNAsKernelEnhanced(None, None, 
                         nhid=cfg.model.hidden_size, 
                         nout=1, 
                         nlayer_outer=cfg.model.num_layers,
@@ -79,8 +69,10 @@ def create_model(cfg):
                         mlp_layers=cfg.model.mlp_layers,
                         dropout=cfg.train.dropout, 
                         subsampling=True if cfg.sampling.mode is not None else False,
-                        online=cfg.subgraph.online) 
+                        online=cfg.subgraph.online,
+                        num_transforms=2) 
     return model
+
 
 def train(train_loader, model, optimizer, device):
     total_loss = 0
@@ -114,7 +106,10 @@ def test(loader, model, evaluator, device):
 
 
 if __name__ == '__main__':
+    from torch_geometric.loader import DataLoader
     # get config 
     cfg.merge_from_file('train/configs/zinc.yaml')
     cfg = update_cfg(cfg)
+    dataset = create_dataset(cfg)
+    loader =  DataLoader(dataset, cfg.train.batch_size, shuffle=True, num_workers=cfg.num_workers)
     run(cfg, create_dataset, create_model, train, test)

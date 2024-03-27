@@ -2,8 +2,10 @@ import torch
 from torch_geometric.data import Data
 from core.transform_utils.sampling import *
 from core.transform_utils.subgraph_extractors import *
+from core.transform_utils.EVD_transform import *
 
 import re
+
 class SubgraphsData(Data):
     def __inc__(self, key, value, *args, **kwargs):
         num_nodes = self.num_nodes
@@ -37,7 +39,11 @@ class SubgraphsTransform(object):
                        minimum_redundancy=2, 
                        shortest_path_mode_stride=2, 
                        random_mode_sampling_rate=0.3,
-                       random_init=False):
+                       random_init=False,
+                       FGSD=False,
+                       FGSD_k=10,
+                       FGSD_p=-1,
+                       FGSD_q=0):
         super().__init__()
         self.num_hops = hops
         self.walk_length = walk_length
@@ -50,15 +56,24 @@ class SubgraphsTransform(object):
         self.minimum_redundancy = minimum_redundancy
         self.shortest_path_mode_stride = shortest_path_mode_stride
         self.random_mode_sampling_rate = random_mode_sampling_rate
+        
+        self.FGSD = FGSD
+        self.FGSD_k = FGSD_k
+        self.FGSD_p = FGSD_p
+        self.FGSD_q = FGSD_q
 
     def __call__(self, data):
         data = SubgraphsData(**{k: v for k, v in data})
         # Step 2: extract subgraphs 
-        subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense = extract_subgraphs(data.edge_index, data.num_nodes, self.num_hops,
-                                                                                             self.walk_length, self.p, self.q, self.repeat)
+        if self.FGSD:
+            assert data.num_nodes == len(data.eigen_values)
+            subgraphs_nodes_mask, hop_indicator_dense = FGSD_kNN_subgraph(data, pow=self.FGSD_p, k=self.FGSD_k, q=self.FGSD_q)
+            subgraphs_edges_mask = subgraphs_nodes_mask[:, data.edge_index[0]] & subgraphs_nodes_mask[:, data.edge_index[1]]
+        else:
+            subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense = extract_subgraphs(data, self.num_hops, self.walk_length, self.p, self.q, self.repeat)
+
         subgraphs_nodes, subgraphs_edges, hop_indicator = to_sparse(subgraphs_nodes_mask, subgraphs_edges_mask, hop_indicator_dense)
-        # print(subgraphs_nodes_mask.sum(0))
-        # exit(0)
+
         if self.subsampling:
             selected_subgraphs, node_selected_times = subsampling_subgraphs(data.edge_index, 
                           subgraphs_nodes if self.sampling_mode != 'min_set_cover' else subgraphs_nodes_mask, data.num_nodes,
@@ -113,12 +128,12 @@ def to_sparse(node_mask, edge_mask, hop_indicator):
         hop_indicator = hop_indicator[subgraphs_nodes[0], subgraphs_nodes[1]]
     return subgraphs_nodes, subgraphs_edges, hop_indicator
 
-def extract_subgraphs(edge_index, num_nodes, num_hops, walk_length=0, p=1, q=1, repeat=1, sparse=False):
+def extract_subgraphs(data, num_hops, walk_length=0, p=1, q=1, repeat=1, sparse=False):
     if walk_length > 0:
-        node_mask, hop_indicator = random_walk_subgraph(edge_index, num_nodes, walk_length, p=p, q=q, repeat=repeat, cal_hops=True)
+        node_mask, hop_indicator = random_walk_subgraph(data.edge_index, data.num_nodes, walk_length, p=p, q=q, repeat=repeat, cal_hops=True)
     else:
-        node_mask, hop_indicator = k_hop_subgraph(edge_index, num_nodes, num_hops)
-    edge_mask = node_mask[:, edge_index[0]] & node_mask[:, edge_index[1]] # N x E dense mask matrix
+        node_mask, hop_indicator = k_hop_subgraph(data.edge_index, data.num_nodes, num_hops)
+    edge_mask = node_mask[:, data.edge_index[0]] & node_mask[:, data.edge_index[1]] # N x E dense mask matrix
     if not sparse:
         return node_mask, edge_mask, hop_indicator
     else:

@@ -8,6 +8,7 @@ from core.data import PlanarSATPairsDataset, calculate_stats
 
 def create_dataset(cfg): 
     # No need to do offline transformation
+    torch.set_num_threads(10)
     transform = SubgraphsTransform(cfg.subgraph.hops, 
                                    walk_length=cfg.subgraph.walk_length, 
                                    p=cfg.subgraph.walk_p, 
@@ -47,7 +48,7 @@ def create_dataset(cfg):
 def create_model(cfg):
     model = GNNAsKernel(None, None, 
                         nhid=cfg.model.hidden_size, 
-                        nout=15, 
+                        nout=2, 
                         nlayer_outer=cfg.model.num_layers,
                         nlayer_inner=cfg.model.mini_layers,
                         gnn_types=[cfg.model.gnn_type], 

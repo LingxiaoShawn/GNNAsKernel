@@ -38,7 +38,7 @@ class GNN(nn.Module):
             x = F.relu(x)
             x = F.dropout(x, self.dropout, training=self.training)
             if self.res:
-                x += previous_x 
+                x = x + previous_x 
                 previous_x = x
 
         x = self.output_encoder(x)
@@ -167,6 +167,7 @@ class SubgraphGNNKernel(nn.Module):
             x = sum(x)
             # x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
         else:
+            # print([i.shape for i in x])
             x = torch.cat(x, dim=-1)
             # last part is only essential for embs_combine_mode = 'concat', can be ignored when overfitting
             x = self.out_encoder(F.dropout(x, self.dropout, training=self.training)) 
@@ -295,7 +296,7 @@ class GNNAsKernel(nn.Module):
                 virtual_node, x = vn_aggregator(virtual_node, x, data.batch)
 
             if self.res:
-                x += previous_x
+                x = x + previous_x
                 previous_x = x # for residual connection
 
         if not self.node_embedding:

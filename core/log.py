@@ -16,6 +16,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
                     f'Emb[{cfg.model.embs}-{cfg.model.embs_combine_mode}-{cfg.model.mlp_layers}] '\
                     f'H[{cfg.model.hidden_size}] HopsEmb[{cfg.model.hops_dim}] Pool[{cfg.model.pool}] VN[{cfg.model.virtual_node}] WithOri[{cfg.model.use_normal_gnn}] '\
                     f'Hops[{cfg.subgraph.hops}] WalkL[{cfg.subgraph.walk_length}] p[{cfg.subgraph.walk_p}] q[{cfg.subgraph.walk_q}] '\
+                    f'FGSD[{cfg.subgraph.FGSD_k}-{cfg.subgraph.FGSD_p}-{cfg.subgraph.FGSD_q}] '\
                     f'Smp[{cfg.sampling.mode}] MR[{cfg.sampling.redundancy}] '\
                     f'Reg[{cfg.train.dropout}-{cfg.train.wd}] Seed[{cfg.seed}] GPU[{cfg.device}]'
     
@@ -37,7 +38,7 @@ def config_logger(cfg, OUT_PATH="results/", time=False):
 
     # redirect stdout print, better for large scale experiments
     os.makedirs(os.path.join('logs', data_name), exist_ok=True)
-    sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
+    # sys.stdout = open(f'logs/{data_name}/{config_string}.txt', 'w')
 
     # log configuration 
     print("-"*50)

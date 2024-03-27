@@ -92,6 +92,12 @@ def set_cfg(cfg):
     # extract subgraph online or offline. Online cost more, but can help randomness
     cfg.subgraph.online = True # When use sampling subgraphs, keep it True. 
 
+    # FGSD with kNN
+    cfg.subgraph.FGSD = False
+    cfg.subgraph.FGSD_k = 8
+    cfg.subgraph.FGSD_p = -0.5
+    cfg.subgraph.FGSD_q = 0.0
+    
     # ------------------------------------------------------------------------ #
     # Subgraph sampling options, to improve scalability
     # ------------------------------------------------------------------------ #

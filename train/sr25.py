@@ -5,7 +5,13 @@ from core.model import GNNAsKernel
 from core.transform import SubgraphsTransform
 from core.data import SRDataset, calculate_stats
 
+from core.transform_utils.EVD_transform import EVDTransform
+
 def create_dataset(cfg): 
+    torch.set_num_threads(cfg.num_workers)
+    pre_transform = EVDTransform()
+    if cfg.subgraph.FGSD:
+        cfg.model.hops_dim = 0
     # No need to do offline transformation
     transform = SubgraphsTransform(cfg.subgraph.hops, 
                                    walk_length=cfg.subgraph.walk_length, 
@@ -16,7 +22,11 @@ def create_dataset(cfg):
                                    minimum_redundancy=cfg.sampling.redundancy, 
                                    shortest_path_mode_stride=cfg.sampling.stride, 
                                    random_mode_sampling_rate=cfg.sampling.random_rate,
-                                   random_init=True)
+                                   random_init=True,
+                                   FGSD=cfg.subgraph.FGSD,
+                                   FGSD_k=cfg.subgraph.FGSD_k,
+                                   FGSD_p=cfg.subgraph.FGSD_p,
+                                   FGSD_q=cfg.subgraph.FGSD_q)
 
     transform_eval = SubgraphsTransform(cfg.subgraph.hops, 
                                         walk_length=cfg.subgraph.walk_length, 
@@ -24,10 +34,14 @@ def create_dataset(cfg):
                                         q=cfg.subgraph.walk_q, 
                                         repeat=cfg.subgraph.walk_repeat,
                                         sampling_mode=None, 
-                                        random_init=False)
+                                        random_init=False,
+                                        FGSD=cfg.subgraph.FGSD,
+                                        FGSD_k=cfg.subgraph.FGSD_k,
+                                        FGSD_p=cfg.subgraph.FGSD_p,
+                                        FGSD_q=cfg.subgraph.FGSD_q)
 
     root = 'data/sr25'
-    dataset = SRDataset(root, transform=transform)
+    dataset = SRDataset(root, pre_transform=pre_transform, transform=transform)
     dataset.data.x = dataset.data.x.long()
     dataset.data.y = torch.arange(len(dataset.data.y)).long() # each graph is a unique class
 
@@ -41,8 +55,8 @@ def create_dataset(cfg):
         train_dataset = dataset
     val_dataset = dataset_list
     test_dataset = dataset_list
-    print('------------All--------------')
-    calculate_stats(dataset)
+    # print('------------All--------------')
+    # calculate_stats(dataset)
     # exit(0)
     return train_dataset, val_dataset, test_dataset
 

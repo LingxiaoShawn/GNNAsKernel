@@ -14,6 +14,7 @@ def k_hop_subgraph(edge_index, num_nodes, num_hops):
         hop_indicator[(hop_indicator==-1) & next_mask] = i+1
     hop_indicator = hop_indicator.T  # N x N 
     node_mask = (hop_indicator >= 0) # N x N dense mask matrix
+
     return node_mask, hop_indicator
 
 

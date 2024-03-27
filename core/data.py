@@ -21,7 +21,7 @@ class PlanarSATPairsDataset(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ["GRAPHSAT.pkl"]
+        return ["GRAPHSAT_new.pkl"]
 
     @property
     def processed_file_names(self):
@@ -32,7 +32,7 @@ class PlanarSATPairsDataset(InMemoryDataset):
 
     def process(self):
         # Read data into huge `Data` list.
-        data_list = pickle.load(open(os.path.join(self.root, "raw/GRAPHSAT.pkl"), "rb"))
+        data_list = pickle.load(open(os.path.join(self.root, "raw/GRAPHSAT_new.pkl"), "rb"))
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
